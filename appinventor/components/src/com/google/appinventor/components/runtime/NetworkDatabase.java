@@ -11,6 +11,7 @@ import android.net.wifi.WifiManager;
 import android.text.format.Formatter;
 
 import com.google.appinventor.components.annotations.SimpleProperty;
+import com.google.appinventor.components.annotations.UsesLibraries;
 import com.google.appinventor.components.annotations.UsesPermissions;
 import com.google.appinventor.components.annotations.SimpleFunction;
 import com.google.appinventor.components.annotations.PropertyCategory;
@@ -30,6 +31,7 @@ as well as provide additional helper functions.
         nonVisible = true,
         iconName = "images/extension.png")
 @SimpleObject(external = true)
+@UsesLibraries(libraries = "NetworkTables.jar")
 @UsesPermissions(permissionNames = "android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
 public class NetworkDatabase extends AndroidNonvisibleComponent
         implements Component {
@@ -47,8 +49,7 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
         
         tableName = "default";
         isServer = false;
-        connectionIP = "0.0.0.0";
-        
+        connectionIP = "0.0.0.0"; 
     }
     
     /**

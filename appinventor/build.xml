@@ -109,6 +109,29 @@
         <pathelement location="build/components/ComponentTranslation/src" />
       </sourcepath>
       <classpath>
+        <pathelement location="lib/android-26/android.jar" />
+        <pathelement location="lib/android/tools/ddmlib.jar"/>
+        <pathelement location="lib/bouncycastle/bcprov-jdk15on-149.jar"/>
+        <pathelement location="lib/bouncycastle/bcpkix-jdk15on-149.jar"/>
+        <pathelement location="lib/android/tools/sdklib.jar"/>
+        <pathelement location="lib/args4j/args4j-2.0.18.jar" />
+        <pathelement location="lib/commons-fileupload/commons-fileupload-1.2.2.jar" />
+        <pathelement location="lib/commons-io/commons-io-2.0.1.jar"/>
+        <pathelement location="lib/findbugs/jsr305.jar" /> <!-- for javax.annotation.Nullable -->
+        <pathelement location="lib/guava/guava-14.0.1.jar" />
+        <pathelement location="lib/gwt_dragdrop/gwt-dnd-3.2.3.jar" />
+        <pathelement location="lib/gwt_incubator/gwt-incubator-20101117-r1766.jar" />
+        <pathelement location="lib/json/json.jar" />
+        <pathelement location="lib/gson/gson-2.1.jar" />
+        <pathelement location="lib/kawa/kawa-1.11-modified.jar" />
+        <pathelement location="lib/keyczar/keyczar-0.66-080111-java-1.6.jar" />
+        <pathelement location="lib/objectify-3.1/objectify-3.1.jar" />
+        <pathelement location="lib/tablelayout/TableLayout-jdk1.5-2007-04-21.jar" />
+        <pathelement location="lib/twitter/twitter4j-core-3.0.5.jar" />
+        <pathelement location="lib/twitter/twitter4j-media-support-3.0.5.jar" />
+        <pathelement location="lib/QRGenerator/core.jar" />
+        <pathelement location="lib/QRGenerator/javase.jar" />
+      	<pathelement location="lib/NetworkTables/NetworkTables.jar" />
         <fileset dir="buildserver/lib" includes="**/*.jar"/>
         <fileset dir="lib" includes="**/*.jar"/>
         <pathelement location="common/build/classes/CommonVersion" />
