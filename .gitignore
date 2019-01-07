@@ -19,3 +19,4 @@ reports/
 .gwt/
 out/
 *.pyc
+.vscode
