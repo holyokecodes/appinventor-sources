@@ -138,26 +138,24 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     }
     
     /**
-     * Sends a string to the table
+     * Sends a text object to the table
      * 
-     * 
-     * @param key	table key to insert string
-     * @param message	string to insert
+     * @param key	table key to insert text
+     * @param message	text to insert
      */
     @SimpleFunction
-    public void SendString(String key, String message) {
+    public void SendText(String key, String message) {
     	networkTable.putString(key, message);
     }
     
     /**
-     * Gets a string from the table
+     * Gets a text object from the table
      * 
-     * 
-     * @param key	table key to get string
-     * @return	string at key location
+     * @param key	table key to get text
+     * @return	text at key location
      */
     @SimpleFunction
-    public String RecieveString(String key) {
+    public String RecieveText(String key) {
     	String message = networkTable.getString(key, "null");
     	return message;
     }
