@@ -1,4 +1,6 @@
-package com.google.appinventor.components.runtime;
+package haus.orange.networking;
+
+import com.google.appinventor.components.runtime.*;
 
 import com.google.appinventor.components.annotations.DesignerComponent;
 import com.google.appinventor.components.annotations.DesignerProperty;
@@ -30,7 +32,7 @@ as well as provide additional helper functions.
         description = "Allows for local network communication",
         category = ComponentCategory.EXTENSION,
         nonVisible = true,
-        iconName = "images/extension.png")
+        iconName = "http://orange.haus/networktables/NetworkTablesIcon.png")
 @SimpleObject(external = true)
 @UsesLibraries(libraries = "NetworkTables.jar")
 @UsesPermissions(permissionNames = "android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
@@ -42,12 +44,12 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
 	
 	private NetworkTable networkTable;
 	
-	private Context context;
+	private ComponentContainer container;
 
     public NetworkDatabase(ComponentContainer container){
         super(container.$form());
         
-        context = container.$context();
+        this.container = container;
     }
     
     /**
@@ -111,7 +113,7 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     @SuppressWarnings("deprecation")
     public String GetDeviceIPAddress() {
     	
-    	WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+    	WifiManager wifiManager = (WifiManager) container.$context().getSystemService(Context.WIFI_SERVICE);
     	String ipAddress = Formatter.formatIpAddress(wifiManager.getConnectionInfo().getIpAddress());
     	
     	return ipAddress;
