@@ -1,4 +1,6 @@
-package com.google.appinventor.components.runtime;
+package haus.orange.networking;
+
+import com.google.appinventor.components.runtime.*;
 
 import com.google.appinventor.components.annotations.DesignerComponent;
 import com.google.appinventor.components.annotations.SimpleObject;
