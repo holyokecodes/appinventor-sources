@@ -220,8 +220,6 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     
     /**
      * Indicates a key in the table was updated
-     * 
-     * @param key	key that was updated
      */
     @SimpleEvent
     public void TableUpdated() {
