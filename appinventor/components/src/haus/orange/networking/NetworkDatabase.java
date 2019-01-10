@@ -12,12 +12,15 @@ import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.text.format.Formatter;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.tables.ITable;
+import edu.wpi.first.wpilibj.tables.ITableListener;
 
 import com.google.appinventor.components.annotations.SimpleProperty;
 import com.google.appinventor.components.annotations.UsesLibraries;
 import com.google.appinventor.components.annotations.UsesPermissions;
 import com.google.appinventor.components.annotations.SimpleFunction;
 import com.google.appinventor.components.annotations.PropertyCategory;
+import com.google.appinventor.components.annotations.SimpleEvent;
 
 /*
 Jacob Bashista 1/7/19
@@ -37,7 +40,7 @@ as well as provide additional helper functions.
 @UsesLibraries(libraries = "NetworkTables.jar")
 @UsesPermissions(permissionNames = "android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
 public class NetworkDatabase extends AndroidNonvisibleComponent
-        implements Component {
+        implements Component, ITableListener {
 	
 	private String tableName;
 	private String connectionIP;
@@ -50,6 +53,11 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
         super(container.$form());
         
         this.container = container;      
+    }
+    
+    @Override
+    public void valueChanged(ITable itable, String string, Object o, boolean bln) {
+    	TableUpdated();
     }
     
     /**
@@ -129,6 +137,7 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     	NetworkTable.setIPAddress(ConnectionIP());
     	
     	networkTable = NetworkTable.getTable(TableName());
+    	networkTable.addTableListener(this);
     }
     
     /**
@@ -137,6 +146,7 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     @SimpleFunction
     public void ConfigureServer() {
     	networkTable = NetworkTable.getTable(tableName);
+    	networkTable.addTableListener(this);
     }
     
     /**
@@ -206,6 +216,16 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     public double GetNumber(String key) {
     	double value = networkTable.getNumber(key, 0.0);
     	return value;
+    }
+    
+    /**
+     * Indicates a key in the table was updated
+     * 
+     * @param key	key that was updated
+     */
+    @SimpleEvent
+    public void TableUpdated() {
+    	EventDispatcher.dispatchEvent(this, "TableUpdated");
     }
     
     
