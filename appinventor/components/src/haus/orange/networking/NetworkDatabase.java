@@ -49,7 +49,7 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     public NetworkDatabase(ComponentContainer container){
         super(container.$form());
         
-        this.container = container;
+        this.container = container;      
     }
     
     /**
@@ -146,7 +146,7 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
      * @param message	text to insert
      */
     @SimpleFunction
-    public void SendText(String key, String message) {
+    public void PutText(String key, String message) {
     	networkTable.putString(key, message);
     }
     
@@ -157,9 +157,55 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
      * @return	text at key location
      */
     @SimpleFunction
-    public String RecieveText(String key) {
+    public String GetText(String key) {
     	String message = networkTable.getString(key, "null");
     	return message;
+    }
+    
+    /**
+     * Puts a boolean object in the table at the key
+     * 
+     * @param key	key to place boolean at
+     * @param value	boolean to insert
+     */
+    @SimpleFunction
+    public void PutBoolean(String key, boolean value) {
+    	networkTable.putBoolean(key, value);
+    }
+    
+    /**
+     * Gets a boolean object form the table
+     * 
+     * @param key	key to get boolean from
+     * @return	boolean at position
+     */
+    @SimpleFunction
+    public boolean GetBoolean(String key) {
+    	boolean value = networkTable.getBoolean(key, false);
+    	return value;
+    }
+    
+    /**
+     * Puts a number object in the table at the key
+     * 
+     * @param key	key to insert number at
+     * @param value	number to insert
+     */
+    @SimpleFunction
+    public void PutNumber(String key, double value) {
+    	networkTable.putNumber(key, value);
+    }
+    
+    /**
+     * Gets a number value from the table
+     * 
+     * @param key	key to get number from
+     * @return	number at key
+     */
+    @SimpleFunction
+    public double GetNumber(String key) {
+    	double value = networkTable.getNumber(key, 0.0);
+    	return value;
     }
     
     
