@@ -12,6 +12,8 @@ import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.text.format.Formatter;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.tables.IRemote;
+import edu.wpi.first.wpilibj.tables.IRemoteConnectionListener;
 import edu.wpi.first.wpilibj.tables.ITable;
 import edu.wpi.first.wpilibj.tables.ITableListener;
 
@@ -32,7 +34,7 @@ as well as provide additional helper functions.
 
 
 @DesignerComponent(version = 1,
-        description = "Allows for local network communication",
+        description = "A Local Network Database Extension",
         category = ComponentCategory.EXTENSION,
         nonVisible = true,
         iconName = "http://orange.haus/networktables/NetworkTablesIcon.png")
@@ -40,7 +42,7 @@ as well as provide additional helper functions.
 @UsesLibraries(libraries = "NetworkTables.jar")
 @UsesPermissions(permissionNames = "android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
 public class NetworkDatabase extends AndroidNonvisibleComponent
-        implements Component, ITableListener {
+        implements Component, ITableListener, IRemoteConnectionListener {
 	
 	private String tableName;
 	private String connectionIP;
@@ -52,13 +54,23 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     public NetworkDatabase(ComponentContainer container){
         super(container.$form());
         
-        this.container = container;      
+        this.container = container;
     }
     
     @Override
     public void valueChanged(ITable itable, String string, Object o, boolean bln) {
     	TableUpdated();
     }
+    
+	@Override
+	public void connected(IRemote arg0) {
+		Connected();
+	}
+
+	@Override
+	public void disconnected(IRemote arg0) {
+		Disconnected();	
+	}
     
     /**
      * Returns the tables name as a string.
@@ -135,7 +147,6 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     	
     	NetworkTable.setClientMode();
     	NetworkTable.setIPAddress(ConnectionIP());
-    	
     	networkTable = NetworkTable.getTable(TableName());
     	networkTable.addTableListener(this);
     }
@@ -145,6 +156,7 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
      */
     @SimpleFunction
     public void ConfigureServer() {
+    	NetworkTable.setServerMode();
     	networkTable = NetworkTable.getTable(tableName);
     	networkTable.addTableListener(this);
     }
@@ -184,7 +196,7 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     }
     
     /**
-     * Gets a boolean object form the table
+     * Gets a boolean object from the table
      * 
      * @param key	key to get boolean from
      * @return	boolean at position
@@ -219,12 +231,57 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     }
     
     /**
-     * Indicates a key in the table was updated
+     * Returns true if key is in table
+     * 
+     * @param key	key to search for
+     * @return	is key in table
+     */
+    @SimpleFunction
+    public boolean ContainsKey(String key) {
+    	return networkTable.containsKey(key);
+    }
+    
+    /**
+     * Returns true if configured as a server
+     * 
+     * @return	is device configured as server
+     */
+    @SimpleFunction
+    public boolean IsServer() {
+    	return networkTable.isServer();
+    }
+    
+    /**
+     * Returns true if the client is connected to server
+     * 
+     * @return	is device connected to server
+     */
+    @SimpleFunction
+    public boolean IsConnected() {
+    	return networkTable.isConnected();
+    }
+    
+    /**
+     * Triggers when a key in the table was updated
      */
     @SimpleEvent
     public void TableUpdated() {
     	EventDispatcher.dispatchEvent(this, "TableUpdated");
     }
     
+    /**
+     * Triggers when a connection was successful
+     */
+    @SimpleEvent
+    public void Connected() {
+    	EventDispatcher.dispatchEvent(this, "Connected");
+    }
     
+    /**
+     * Triggers when a connection was removed
+     */
+    @SimpleEvent
+    public void Disconnected() {
+    	EventDispatcher.dispatchEvent(this, "Disconnected");
+    }
 }
