@@ -149,6 +149,7 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     	NetworkTable.setIPAddress(ConnectionIP());
     	networkTable = NetworkTable.getTable(TableName());
     	networkTable.addTableListener(this);
+    	networkTable.addConnectionListener(this, false);
     }
     
     /**
@@ -159,6 +160,7 @@ public class NetworkDatabase extends AndroidNonvisibleComponent
     	NetworkTable.setServerMode();
     	networkTable = NetworkTable.getTable(tableName);
     	networkTable.addTableListener(this);
+    	networkTable.addConnectionListener(this, false);
     }
     
     /**
