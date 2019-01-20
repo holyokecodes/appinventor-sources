@@ -58,7 +58,6 @@
         <fileset dir="${run.lib.dir}" includes="*.jar" excludes="BuildServer.jar"/>
       </classpath>
     </ai.javac>
-
     <!-- Copy files that will be loaded as resources -->
     <property name="classes.files.dir" location="${BuildServer-class.dir}/files" />
     <property name="support.dir" location="${lib.dir}/android/support" />
@@ -69,6 +68,7 @@
       <!-- Map assets for build server -->
       <fileset dir="${lib.dir}/leaflet" includes="leaflet.js,leaflet.css" />
       <fileset dir="${lib.dir}/leaflet/assets" includes="*"/>
+      <fileset dir="${lib.dir}/vuforia" includes="*"/>
       <!-- Component/extension assets (for testing) -->
       <fileset dir="${appinventor.dir}/components/src" includes="**/assets/*"/>
     </copy>
