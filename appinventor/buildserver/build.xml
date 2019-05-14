@@ -68,7 +68,6 @@
       <!-- Map assets for build server -->
       <fileset dir="${lib.dir}/leaflet" includes="leaflet.js,leaflet.css" />
       <fileset dir="${lib.dir}/leaflet/assets" includes="*"/>
-      <fileset dir="${lib.dir}/vuforia" includes="*"/>
       <!-- Component/extension assets (for testing) -->
       <fileset dir="${appinventor.dir}/components/src" includes="**/assets/*"/>
     </copy>
@@ -99,6 +98,8 @@
     <copy toFile="${classes.files.dir}/google-http-client-android3-beta.jar" file="${lib.dir}/oauth/google-http-client-android3-1.10.3-beta.jar" />
     <copy toFile="${classes.files.dir}/gson-2.1.jar" file="${lib.dir}/gson/gson-2.1.jar" />
     <copy toFile="${classes.files.dir}/json.jar" file="${lib.dir}/json/json.jar" />
+  	<copy toFile="${classes.files.dir}/Vuforia.jar" file="${lib.dir}/vuforia/Vuforia.jar" />
+  	    <copy toFile="${classes.files.dir}/libVuforia.so" file="${lib.dir}/vuforia/libVuforia.so" />
     <copy toFile="${classes.files.dir}/google-oauth-client-beta.jar" file="${lib.dir}/oauth/google-oauth-client-1.10.1-beta.jar" />
     <copy toFile="${classes.files.dir}/jedis.jar" file="${lib.dir}/jedis/jedis-3.0.0-SNAPSHOT-jar-with-dependencies.jar" />
     <copy toFile="${classes.files.dir}/commons-pool.jar" file="${lib.dir}/commons-pool/commons-pool2-2.0.jar" />

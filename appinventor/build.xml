@@ -121,6 +121,8 @@
         <pathelement location="lib/twitter/twitter4j-media-support-3.0.5.jar" />
         <pathelement location="lib/QRGenerator/core.jar" />
         <pathelement location="lib/QRGenerator/javase.jar" />
+      	<pathelement location="lib/vuforia/Vuforia.jar"/>
+      	<pathelement location="lib/vuforia/libVuforia.so"/>
         <fileset dir="buildserver/lib" includes="**/*.jar"/>
         <!-- Apache Http Libraries -->
         <pathelement location="lib/apache-http/httpcore-4.3.2.jar" />
@@ -150,7 +152,6 @@
         <pathelement location="lib/appengine/appengine-java-sdk-1.9.17/lib/user/orm/geronimo-jpa_3.0_spec-1.1.1.jar"/>
         <!-- prevent error importing GitBuildId if it has been generated -->
         <pathelement location="common/build/classes/CommonVersion" />
-        <pathelement location="lib/vuforia/Vuforia.jar" />
       </classpath>
       <!-- TODO(opensource) - Add more <link> elements that correspond to the jars on the
            classpath above,so our javadoc will link appropriate online javadoc for libraries we

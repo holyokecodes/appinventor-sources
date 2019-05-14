@@ -16,11 +16,13 @@ import com.google.appinventor.components.annotations.SimpleProperty;
 import com.google.appinventor.components.annotations.UsesAssets;
 import com.google.appinventor.components.annotations.UsesPermissions;
 import com.google.appinventor.components.annotations.UsesLibraries;
+import com.google.appinventor.components.annotations.UsesNativeLibraries;
 import com.google.appinventor.components.common.ComponentCategory;
 import com.google.appinventor.components.common.PropertyTypeConstants;
 import com.google.appinventor.components.common.YaVersion;
 import com.google.appinventor.components.runtime.Component;
 import com.google.appinventor.components.runtime.ComponentContainer;
+import com.google.appinventor.components.runtime.EventDispatcher;
 import com.google.appinventor.components.runtime.AndroidNonvisibleComponent;
 import com.google.appinventor.components.runtime.ActivityResultListener;
 import com.google.appinventor.components.runtime.util.ErrorMessages;
@@ -28,6 +30,7 @@ import com.google.appinventor.components.runtime.util.ErrorMessages;
 import android.app.Activity;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -38,12 +41,16 @@ import java.io.File;
 import java.lang.ref.WeakReference;
 import java.util.Date;
 
-import org.holyokecodes.ai.vuforia.util.VuforiaApplicationSession;
+import org.holyokecodes.ai.vuforia.util.SampleApplicationControl;
+import org.holyokecodes.ai.vuforia.util.SampleApplicationException;
+import org.holyokecodes.ai.vuforia.util.SampleApplicationSession;
+
+import com.vuforia.State;
 import com.vuforia.Vuforia;
 
 /**
  * Uses the Vuforia Engine for object recognition.
- * Returns relative x, y, z coordinates of object if recogized.
+ * Returns relative x, y, z coordinates of object if recognized.
  */
 @DesignerComponent(version = 1,
         description = "Object Recognition with Vuforia",
@@ -54,16 +61,19 @@ import com.vuforia.Vuforia;
 @UsesPermissions(permissionNames = "android.permission.WRITE_EXTERNAL_STORAGE, android.permission.READ_EXTERNAL_STORAGE," +
         "android.permission.CAMERA")
 @UsesAssets(fileNames = "Test2_OT.dat, Test2_OT.xml")
+@UsesNativeLibraries(libraries="libVuforia.so")
 @UsesLibraries(libraries = "Vuforia.jar")
 public class ObjectTracker extends AndroidNonvisibleComponent
-        implements ActivityResultListener, Component {
+        implements ActivityResultListener, Component, SampleApplicationControl {
 	private static final String LOG_TAG = ObjectTracker.class.getSimpleName();
-	private final WeakReference<VuforiaApplicationSession> appSessionRef;
     private final ComponentContainer container;
 
     /* Used to identify the call to startActivityForResult. Will be passed back
     into the resultReturned() callback method. */
     private int requestCode;
+    
+    
+    private SampleApplicationSession vuforiaAppSession;
     
     /**
      * Creates a Vuforia component.
@@ -134,36 +144,89 @@ public class ObjectTracker extends AndroidNonvisibleComponent
 
     @SimpleFunction
     public void InitVuforia() {
-    	int mProgressValue = -1;
-    	
-    	VuforiaApplicationSession session = appSessionRef.get();
-    	
-        Vuforia.setInitParameters(session.mActivityRef.get(), session.mVuforiaFlags, "AYtvymv/////AAABmcNw6ZzgC0SsmCu/EFCoUs1qP6UKlOpK8XbV6Qn+NYHJw/altw/Cib//l3nRHVJguJ5j3xp3C3vcw5oADSpy8aLLoXapGBQIJjeudB9TmSMnswrrloG+ghh4vOHfFwADu4S85WwkZE6IcuQF6RvsVJo7bTTxWC6UTOAgrYAINHu3ZOkyFl0TMMwSQhf783HlLHfm8ADoHbRB1BTS5YGYwBS54kmkhmxRWvKcAZAOqaRScP+qWhzDp0pXFSG/XtuNvOA4ZBDXAqWvqS9kCX6t55ICBrbKViZcpwW1Bv6PPNZzThud5BqDBtyNOjTdqn0/O0FyOzPoteNFjggxdze0UWj+XotYOKdBj70mQohNMfMN");
-       
-        do
-        {
-            // Vuforia.init() blocks until an initialization step is
-            // complete, then it proceeds to the next step and reports
-            // progress in percents (0 ... 100%).
-            // If Vuforia.init() returns -1, it indicates an error.
-            // Initialization is done when progress has reached 100%.
-            mProgressValue = Vuforia.init();
-                                  
-            // We check whether the task has been canceled in the
-            // meantime (by calling AsyncTask.cancel(true)).
-            // and bail out if it has, thus stopping this thread.
-            // This is necessary as the AsyncTask will run to completion
-            // regardless of the status of the component that
-            // started is.
-        } while (mProgressValue >= 0 && mProgressValue < 100);
-  
-        return;
-
+    	vuforiaAppSession = new SampleApplicationSession(this, LicenseKey());
+    	vuforiaAppSession.initAR(container.$context(), ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     }
 
-    @SimpleEvent
-    public void ObjectRecognized() {
-    }
+    /**
+	 * Triggers when a key in the table was updated
+	 */
+	@SimpleEvent
+	public void VuforiaInitialized() {
+		EventDispatcher.dispatchEvent(this, "VuforiaInitialized");
+	}
+	
+	/**
+	 * Triggers when Vuforia fails to Init
+	 */
+	@SimpleEvent
+	public void VuforiaFailed() {
+		EventDispatcher.dispatchEvent(this, "VuforiaFailed");
+	}
+
+	@Override
+	public boolean doInitTrackers() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean doLoadTrackersData() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean doStartTrackers() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean doStopTrackers() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean doUnloadTrackersData() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean doDeinitTrackers() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void onInitARDone(SampleApplicationException e) {
+		if(e != null) {
+			VuforiaInitialized();
+		}else {
+			VuforiaFailed();
+		}
+		
+	}
+
+	@Override
+	public void onVuforiaUpdate(State state) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onVuforiaResumed() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onVuforiaStarted() {
+		// TODO Auto-generated method stub
+		
+	}
     
 }
 
