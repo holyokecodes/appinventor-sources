@@ -131,7 +131,6 @@
         <pathelement location="lib/twitter/twitter4j-media-support-3.0.5.jar" />
         <pathelement location="lib/QRGenerator/core.jar" />
         <pathelement location="lib/QRGenerator/javase.jar" />
-      	<pathelement location="lib/NetworkTables/NetworkTables.jar" />
         <fileset dir="buildserver/lib" includes="**/*.jar"/>
         <fileset dir="lib" includes="**/*.jar"/>
         <pathelement location="common/build/classes/CommonVersion" />
