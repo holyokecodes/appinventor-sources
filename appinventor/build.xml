@@ -99,6 +99,8 @@
         <pathelement location="components/src" />
       </sourcepath>
       <classpath>
+      	<pathelement location="lib/engineio/engineio-client.jar" />
+      	<pathelement location="lib/socketio/socketio-client.jar" />
         <pathelement location="lib/android-26/android.jar" />
         <pathelement location="lib/android/tools/ddmlib.jar"/>
         <pathelement location="lib/bouncycastle/bcprov-jdk15on-149.jar"/>
@@ -117,8 +119,6 @@
         <pathelement location="lib/keyczar/keyczar-0.66-080111-java-1.6.jar" />
         <pathelement location="lib/objectify-3.1/objectify-3.1.jar" />
         <pathelement location="lib/tablelayout/TableLayout-jdk1.5-2007-04-21.jar" />
-      	<pathelement location="lib/socketio/socketio-client.jar" />
-      	<pathelement location="lib/socketio/engineio-client.jar" />
         <pathelement location="lib/twitter/twitter4j-core-3.0.5.jar" />
         <pathelement location="lib/twitter/twitter4j-media-support-3.0.5.jar" />
         <pathelement location="lib/QRGenerator/core.jar" />
