@@ -87,7 +87,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param name name of the video stream
 	 */
 	@SimpleFunction
-	public void GetVideoStream(String name) {
+	public void GetRemoteVideoStream(String name) {
 		
 	}
 	
@@ -123,17 +123,17 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param videoStream location of video file
 	 */
 	@SimpleEvent
-	public void OnVideoStreamStarted(String videoStream) {
-		EventDispatcher.dispatchEvent(this, "OnVideoStreamStarted", videoStream);
+	public void OnVideoStreamStarted(String name, String videoStream) {
+		EventDispatcher.dispatchEvent(this, "OnVideoStreamStarted", name, videoStream);
 	}
 	
 	/**
-	 * Runs after GetVideoStream is successful
+	 * Runs after GetRemoteVideoStream is successful
 	 * @param videoStream location of video file
 	 */
 	@SimpleEvent
-	public void OnVideoStreamGot(String videoStream) {
-		EventDispatcher.dispatchEvent(this, "OnVideoStreamGot", videoStream);
+	public void OnRemoteVideoStreamStarted(String name, String videoStream) {
+		EventDispatcher.dispatchEvent(this, "OnRemoteVideoStream", name, videoStream);
 	}
 	
 	/**
