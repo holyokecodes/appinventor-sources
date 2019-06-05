@@ -96,6 +96,7 @@
     <copy toFile="${classes.files.dir}/fusiontables.jar" file="${lib.dir}/fusiontables/fusiontables.jar" />
   	<copy toFile="${classes.files.dir}/engineio-client.jar" file="${lib.dir}/engineio/engineio-client.jar" />
     <copy toFile="${classes.files.dir}/socketio-client.jar" file="${lib.dir}/socketio/socketio-client.jar" />
+  	<copy toFile="${classes.files.dir}/okhttp-3.4.1.jar" file="${lib.dir}/okhttp/okhttp-3.4.1.jar" />
     <copy toFile="${classes.files.dir}/firebase.jar" file="${lib.dir}/firebase/firebase-client-android-2.5.0.jar" />
     <copy toFile="${classes.files.dir}/google-api-client-beta.jar" file="${lib.dir}/oauth/google-api-client-1.10.3-beta.jar" />
     <copy toFile="${classes.files.dir}/google-http-client-beta.jar" file="${lib.dir}/oauth/google-http-client-1.10.3-beta.jar" />

@@ -111,6 +111,7 @@
       <classpath>
       	<pathelement location="lib/engineio/engineio-client.jar" />
       	<pathelement location="lib/socketio/socketio-client.jar" />
+      	<pathelement location="lib/okhttp/okhttp-3.4.1.jar" />
         <pathelement location="lib/android-26/android.jar" />
         <pathelement location="lib/android/tools/ddmlib.jar"/>
         <pathelement location="lib/bouncycastle/bcprov-jdk15on-149.jar"/>
