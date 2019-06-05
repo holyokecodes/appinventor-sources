@@ -41,7 +41,7 @@ devices to communicate across networks.
 
 @DesignerComponent(version = 1, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon.png")
 @SimpleObject(external = true)
-@UsesLibraries(libraries = "okhttp-3.4.1.jar," + "engineio-client.jar," + "socketio-client.jar")
+@UsesLibraries(libraries = "okio.jar," + "okhttp.jar," + "engineio.jar," + "socketio.jar")
 @UsesPermissions(permissionNames = "android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
