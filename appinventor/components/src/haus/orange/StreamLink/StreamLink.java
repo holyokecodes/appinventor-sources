@@ -28,6 +28,8 @@ import com.google.appinventor.components.runtime.Component;
 import com.google.appinventor.components.runtime.ComponentContainer;
 import com.google.appinventor.components.runtime.EventDispatcher;
 
+import android.app.Activity;
+import android.telephony.TelephonyManager;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -42,7 +44,7 @@ devices to communicate across networks.
 @DesignerComponent(version = 1, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon.png")
 @SimpleObject(external = true)
 @UsesLibraries(libraries = "okio.jar," + "okhttp.jar," + "engineio.jar," + "socketio.jar")
-@UsesPermissions(permissionNames = "android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
+@UsesPermissions(permissionNames = "android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE, android.permission.READ_PHONE_STATE")
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
 	private ComponentContainer container;
@@ -58,7 +60,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 		this.container = container;
 		
-		serverIP = "http://streamlink.orange.haus";
+		serverIP = "http://192.168.86.68:3000";
 		isLinked = false;
 		
 	}
@@ -82,16 +84,23 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 			  @Override
 			  public void call(Object... args) {
-				  
-				  JSONObject obj = (JSONObject)args[0];
-				  
-				  if(obj.has("link_code")) {
-					  try {
-					  OnLinkCreated(obj.getString("link_code"));
-					  }catch (JSONException e) {
-						  e.printStackTrace();
+				try {
+					final JSONObject obj = new JSONObject((String) args[0]);
+					if(obj.has("link_code")) {
+						container.$context().runOnUiThread(new Runnable() {
+							public void run() {
+								try {
+									OnLinkCreated(obj.getString("link_code"));
+								} catch (JSONException e) {
+									e.printStackTrace();
+								}
+							}
+						});
 					  }
-				  }
+				} catch (JSONException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
 			  }
 
 			}).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
@@ -120,7 +129,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 *
 	 * @param ip server ip of the StreamLink
 	 */
-	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "http://streamlink.orange.haus")
+	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "http://192.168.86.68:3000")
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
 	public void ServerIP(String ip) {
 		serverIP = ip;
@@ -148,9 +157,9 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 			
 			try {
 			JSONObject obj = new JSONObject();
-			obj.put("device_id", "server");
+			obj.put("device_id", this.GetDeviceId());
 			obj.put("link_password", hash);
-			socket.emit("createlink", obj);
+			socket.emit("createlink", obj.toString());
 			} catch(JSONException e) {
 				e.printStackTrace();
 			}
@@ -172,9 +181,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	@SimpleFunction
 	public void ConnectToLink(String linkCode, String password) {
 		InitSocketIO();
-		
-		
-		
 	}
 	
 	/**
@@ -212,6 +218,17 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	@SimpleFunction
 	public void SendTextMessage(String name, String message) {
 		
+	}
+	
+	/**
+	 * Gets the devices unique id.
+	 */
+	@SimpleFunction
+	public String GetDeviceId() {
+		
+		TelephonyManager telephonyManager = (TelephonyManager) container.$context().getSystemService(Activity.TELEPHONY_SERVICE);
+		
+		return telephonyManager.getImei();
 	}
 	
 	/**
