@@ -53,7 +53,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	
 	private String serverIP;
 	
-	private boolean isLinked;
+	private boolean isConnected;
 	
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
@@ -61,7 +61,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		this.container = container;
 		
 		serverIP = "http://192.168.86.68:3000";
-		isLinked = false;
+		isConnected = false;
 		
 	}
 	
@@ -77,7 +77,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 			  @Override
 			  public void call(Object... args) {
 				  // Connected
-				  isLinked = true;
+				  isConnected = true;
 			  }
 
 			}).on("linkcreated", new Emitter.Listener() {
@@ -103,11 +103,32 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 				}
 			  }
 
-			}).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
+			}).on("linkjoined", new Emitter.Listener() {
+
+				  @Override
+				  public void call(Object... args) {
+					try {
+						final JSONObject obj = new JSONObject((String) args[0]);
+						if(obj.has("success")) {
+							if(obj.getBoolean("success")) {
+								container.$context().runOnUiThread(new Runnable() {
+									public void run() {
+										OnLinkConnected();
+									}
+								});
+							}
+						  }
+					} catch (JSONException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				  }
+
+				}).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
 
 			  @Override
 			  public void call(Object... args) {
-				  isLinked = false;
+				  isConnected = false;
 			  }
 
 			});
@@ -141,36 +162,50 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 */
 	@SimpleFunction
 	public void CreateLink(String password) {
-		InitSocketIO();
 		
-		SecureRandom random = new SecureRandom();
+		if(!isConnected) {
+			InitSocketIO();
+		}
 		
-		byte[] salt = new byte[16];
-		random.nextBytes(salt);
 		
-		KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 128);
+		String hashedPassword = hashPassword(password);
 		
 		try {
-			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-			
-			byte[] hash = factory.generateSecret(spec).getEncoded();
-			
-			try {
 			JSONObject obj = new JSONObject();
 			obj.put("device_id", this.GetDeviceId());
-			obj.put("link_password", hash);
+			obj.put("link_password", hashedPassword);
 			socket.emit("createlink", obj.toString());
-			} catch(JSONException e) {
-				e.printStackTrace();
-			}
-			
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (InvalidKeySpecException e) {
-			// TODO Auto-generated catch block
+		} catch(JSONException e) {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	private String hashPassword(String password) {
+		
+		try {
+			
+			SecureRandom random = new SecureRandom();
+			byte[] salt = new byte[16];
+			random.nextBytes(salt);
+			
+			
+			KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 128);
+			
+			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+			
+			
+			byte[] hash = factory.generateSecret(spec).getEncoded();
+			
+			return String.valueOf(hash);
+			
+		} catch (InvalidKeySpecException e) {
+			e.printStackTrace();
+			return null;
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return null;
+		}		
 	}
 	
 	/**
@@ -180,16 +215,33 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 */
 	@SimpleFunction
 	public void ConnectToLink(String linkCode, String password) {
-		InitSocketIO();
+		
+		if(!isConnected) {
+			InitSocketIO();
+		}
+		
+		String hashedPassword = hashPassword(password);
+		
+		try {
+			JSONObject obj = new JSONObject();
+			obj.put("device_id", this.GetDeviceId());
+			obj.put("link_code", linkCode);
+			obj.put("link_password", hashedPassword);
+			
+			socket.emit("joinlink", obj.toString());
+			
+		} catch(JSONException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
-	 * Checks if the device is connected to a link
+	 * Checks if the device is connected to the server
 	 * @return connection status
 	 */
 	@SimpleFunction
-	public boolean IsLinked() {
-		return isLinked;
+	public boolean IsConnected() {
+		return isConnected;
 	}
 	
 	/**
