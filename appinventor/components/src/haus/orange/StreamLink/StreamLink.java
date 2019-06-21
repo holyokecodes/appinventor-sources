@@ -55,6 +55,8 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	
 	private String deviceID;
 	
+	private String linkCode;
+	
 	private boolean isConnected;
 	
 	public StreamLink(ComponentContainer container) {
@@ -64,6 +66,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		
 		serverIP = "http://192.168.86.68:3000";
 		deviceID = "0000";
+		linkCode = "0000";
 		isConnected = false;
 		
 	}
@@ -90,6 +93,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 				try {
 					final JSONObject obj = new JSONObject((String) args[0]);
 					if(obj.has("link_code")) {
+						linkCode = obj.getString("link_code");
 						container.$context().runOnUiThread(new Runnable() {
 							public void run() {
 								try {
@@ -114,6 +118,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 						final JSONObject obj = new JSONObject((String) args[0]);
 						if(obj.has("success")) {
 							if(obj.getBoolean("success")) {
+								linkCode = obj.getString("link_code");
 								container.$context().runOnUiThread(new Runnable() {
 									public void run() {
 										OnLinkConnected();
