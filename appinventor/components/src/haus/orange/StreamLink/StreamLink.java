@@ -43,8 +43,8 @@ devices to communicate across networks.
 
 @DesignerComponent(version = 1, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon.png")
 @SimpleObject(external = true)
-@UsesLibraries(libraries = "okio.jar," + "okhttp.jar," + "engineio.jar," + "socketio.jar")
-@UsesPermissions(permissionNames = "android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE, android.permission.READ_PHONE_STATE")
+@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar")
+@UsesPermissions(permissionNames = "android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
 	private ComponentContainer container;
@@ -52,6 +52,8 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	private Socket socket;
 	
 	private String serverIP;
+	
+	private String deviceID;
 	
 	private boolean isConnected;
 	
@@ -61,6 +63,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		this.container = container;
 		
 		serverIP = "http://192.168.86.68:3000";
+		deviceID = "0000";
 		isConnected = false;
 		
 	}
@@ -157,6 +160,27 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 	
 	/**
+	 * Returns the Device ID as a string.
+	 *
+	 * @return deviceID as string.
+	 */
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for StreamLink")
+	public String DeviceID() {
+		return deviceID;
+	}
+
+	/**
+	 * Specifies the Device ID.
+	 *
+	 * @param id device id for StreamLink
+	 */
+	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "0000")
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
+	public void DeviceID(String id) {
+		deviceID = id;
+	}
+	
+	/**
 	 * Creates a link with the password specified
 	 * @param password password to apply to the link
 	 */
@@ -169,7 +193,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		
 		try {
 			JSONObject obj = new JSONObject();
-			obj.put("device_id", this.GetDeviceId());
+			obj.put("device_id", DeviceID());
 			obj.put("link_password", password);
 			socket.emit("createlink", obj.toString());
 		} catch(JSONException e) {
@@ -192,7 +216,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		
 		try {
 			JSONObject obj = new JSONObject();
-			obj.put("device_id", this.GetDeviceId());
+			obj.put("device_id", DeviceID());
 			obj.put("link_code", linkCode);
 			obj.put("link_password", password);
 			
@@ -238,17 +262,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	@SimpleFunction
 	public void SendTextMessage(String name, String message) {
 		
-	}
-	
-	/**
-	 * Gets the devices unique id.
-	 */
-	@SimpleFunction
-	public String GetDeviceId() {
-		
-		TelephonyManager telephonyManager = (TelephonyManager) container.$context().getSystemService(Activity.TELEPHONY_SERVICE);
-		
-		return telephonyManager.getImei();
 	}
 	
 	/**
