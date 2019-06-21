@@ -167,45 +167,15 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 			InitSocketIO();
 		}
 		
-		
-		String hashedPassword = hashPassword(password);
-		
 		try {
 			JSONObject obj = new JSONObject();
 			obj.put("device_id", this.GetDeviceId());
-			obj.put("link_password", hashedPassword);
+			obj.put("link_password", password);
 			socket.emit("createlink", obj.toString());
 		} catch(JSONException e) {
 			e.printStackTrace();
 		}
 		
-	}
-	
-	private String hashPassword(String password) {
-		
-		try {
-			
-			SecureRandom random = new SecureRandom();
-			byte[] salt = new byte[16];
-			random.nextBytes(salt);
-			
-			
-			KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 128);
-			
-			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-			
-			
-			byte[] hash = factory.generateSecret(spec).getEncoded();
-			
-			return String.valueOf(hash);
-			
-		} catch (InvalidKeySpecException e) {
-			e.printStackTrace();
-			return null;
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-			return null;
-		}		
 	}
 	
 	/**
@@ -220,13 +190,11 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 			InitSocketIO();
 		}
 		
-		String hashedPassword = hashPassword(password);
-		
 		try {
 			JSONObject obj = new JSONObject();
 			obj.put("device_id", this.GetDeviceId());
 			obj.put("link_code", linkCode);
-			obj.put("link_password", hashedPassword);
+			obj.put("link_password", password);
 			
 			socket.emit("joinlink", obj.toString());
 			
