@@ -1,17 +1,13 @@
 package haus.orange.StreamLink;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
-
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.firebase.tubesock.Base64;
 import com.google.appinventor.components.annotations.DesignerComponent;
 import com.google.appinventor.components.annotations.DesignerProperty;
 import com.google.appinventor.components.annotations.PropertyCategory;
@@ -27,9 +23,10 @@ import com.google.appinventor.components.runtime.AndroidNonvisibleComponent;
 import com.google.appinventor.components.runtime.Component;
 import com.google.appinventor.components.runtime.ComponentContainer;
 import com.google.appinventor.components.runtime.EventDispatcher;
+import com.google.appinventor.components.runtime.util.MediaUtil;
 
-import android.app.Activity;
-import android.telephony.TelephonyManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -44,7 +41,7 @@ devices to communicate across networks.
 @DesignerComponent(version = 1, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon.png")
 @SimpleObject(external = true)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar")
-@UsesPermissions(permissionNames = "android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
+@UsesPermissions(permissionNames = "android.permission.WRITE_EXTERNAL_STORAGE, android.permission.READ_EXTERNAL_STORAGE, android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
 	private ComponentContainer container;
@@ -132,6 +129,36 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 					}
 				  }
 
+				}).on("newmessage", new Emitter.Listener() {
+					
+					@Override
+					public void call(Object... args) {
+						try {
+							final JSONObject obj = new JSONObject((String) args[0]);
+							if(obj.has("link_code")) {
+								if(obj.getString("type").equals("string")) {
+									final String name = obj.getString("name");
+									final String message = obj.getString("message");
+									container.$context().runOnUiThread(new Runnable() {
+										public void run() {
+											OnTextMessageRecieved(name, message);
+										}
+									});
+								}else if(obj.getString("type").equals("image")) {
+									final String name = obj.getString("name");
+									final String image = obj.getString("message");
+									container.$context().runOnUiThread(new Runnable() {
+										public void run() {
+											OnImageRecieved(name, image);
+										}
+									});
+								}
+							}
+						} catch(JSONException e1) {
+							e1.printStackTrace();
+						}
+						
+					}
 				}).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
 
 			  @Override
@@ -242,31 +269,69 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 	
 	/**
-	 * Starts video streaming from the current device to the Link
-	 * @param name of video stream
-	 */
-	@SimpleFunction
-	public void StartVideoStream(String name) {
-		
-	}
-	
-	/**
-	 * Gets the Video Stream for a given name
-	 * @param name name of the video stream
-	 */
-	@SimpleFunction
-	public void GetRemoteVideoStream(String name) {
-		
-	}
-	
-	/**
 	 * Sends a TextMessage to the Link
 	 * @param name name of the message to identify it
 	 * @param message message to be sent
 	 */
 	@SimpleFunction
 	public void SendTextMessage(String name, String message) {
-		
+		if(!isConnected) {
+			// Can't Run Yet
+		}else {
+			try {
+				JSONObject obj = new JSONObject();
+				obj.put("link_code", this.linkCode);
+				obj.put("name", name);
+				obj.put("type", "string");
+				obj.put("message", message);
+				
+				socket.emit("message", obj.toString());
+			} catch(JSONException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * Sends a Image to the Link
+	 * @param name name of the image to identify it
+	 * @param image path to image file
+	 */
+	@SimpleFunction
+	public void SendImage(String name, String image) {
+		if(!isConnected) {
+			// Can't Run Yet
+		}else {
+			
+			try {
+				
+				BitmapDrawable bitmapDraw = MediaUtil.getBitmapDrawable(container.$form(), image);
+				
+				Bitmap bitmap = bitmapDraw.getBitmap();
+				
+				
+				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+				
+				bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+				
+				byte[] imageBytes = outputStream.toByteArray();
+				
+				String image64 = Base64.encodeToString(imageBytes, false);
+				
+				JSONObject obj = new JSONObject();
+				obj.put("link_code", this.linkCode);
+				obj.put("name", name);
+				obj.put("type", "image");
+				obj.put("message", image64);
+				
+				socket.emit("message", obj.toString());
+				
+			} catch(JSONException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	/**
@@ -287,29 +352,22 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 	
 	/**
-	 * Runs after StartVideoStream is successful
-	 * @param videoStream location of video file
-	 */
-	@SimpleEvent
-	public void OnVideoStreamStarted(String name, String videoStream) {
-		EventDispatcher.dispatchEvent(this, "OnVideoStreamStarted", name, videoStream);
-	}
-	
-	/**
-	 * Runs after GetRemoteVideoStream is successful
-	 * @param videoStream location of video file
-	 */
-	@SimpleEvent
-	public void OnRemoteVideoStreamStarted(String name, String videoStream) {
-		EventDispatcher.dispatchEvent(this, "OnRemoteVideoStream", name, videoStream);
-	}
-	
-	/**
 	 * Runs when a text based message is received
+	 * @param name identifier for message
 	 * @param message message that was sent
 	 */
 	@SimpleEvent
 	public void OnTextMessageRecieved(String name, String message) {
 		EventDispatcher.dispatchEvent(this, "OnTextMessageRecieved", name, message);
+	}
+	
+	/**
+	 * Runs when a image is received
+	 * @param name identifier for image
+	 * @param image path to the image file
+	 */
+	@SimpleEvent
+	public void OnImageRecieved(String name, String image) {
+		EventDispatcher.dispatchEvent(this, "OnImageRecieved", name, image);
 	}
 }
