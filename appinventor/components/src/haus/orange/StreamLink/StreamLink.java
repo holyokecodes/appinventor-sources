@@ -1,8 +1,13 @@
 package haus.orange.StreamLink;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
+import java.util.Date;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,7 +31,10 @@ import com.google.appinventor.components.runtime.EventDispatcher;
 import com.google.appinventor.components.runtime.util.MediaUtil;
 
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
+import android.os.Environment;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -149,7 +157,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 									final String image = obj.getString("message");
 									container.$context().runOnUiThread(new Runnable() {
 										public void run() {
-											OnImageRecieved(name, image);
+											ProcessRecievedImage(name, image);
 										}
 									});
 								}
@@ -168,6 +176,41 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 			});
 			socket.connect();
+	}
+	
+	
+	private void ProcessRecievedImage(String name, String base64Image) {
+		Date date = new Date();
+		
+		byte[] byteImage = Base64.decode(base64Image);
+		
+		Bitmap bitmap = BitmapFactory.decodeByteArray(byteImage, 0, byteImage.length);
+		
+		OutputStream fOut = null;
+		
+		File file = new File(Environment.getExternalStorageDirectory(),
+		        "/Pictures/app_inventor_" + date.getTime()
+		        + ".jpg");
+		
+		try {
+			fOut = new FileOutputStream(file);
+			
+			
+			bitmap.compress(Bitmap.CompressFormat.JPEG, 85, fOut);
+			fOut.flush();
+			fOut.close();
+			
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		OnImageRecieved(name, file.getPath());
+		
 	}
 	
 	/**
@@ -312,7 +355,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 				
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 				
-				bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+				bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
 				
 				byte[] imageBytes = outputStream.toByteArray();
 				
