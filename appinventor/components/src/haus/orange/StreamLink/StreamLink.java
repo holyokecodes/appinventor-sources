@@ -160,6 +160,26 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 											ProcessRecievedImage(name, image);
 										}
 									});
+								}else if(obj.getString("type").equals("math")){
+								
+									final String name = obj.getString("name");
+									final long message = (long)obj.getDouble("message");
+									container.$context().runOnUiThread(new Runnable() {
+										public void run() {
+											OnMathMessageRecieved(name, message);
+										}
+									});
+									
+								}else if(obj.getString("type").equals("logic")){
+								
+									final String name = obj.getString("name");
+									final boolean message = obj.getBoolean("message");
+									container.$context().runOnUiThread(new Runnable() {
+										public void run() {
+											OnLogicMessageRecieved(name, message);
+										}
+									});
+									
 								}
 							}
 						} catch(JSONException e1) {
@@ -336,6 +356,54 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 	
 	/**
+	 * Sends a MathMessage to the Link
+	 * @param name name of the message to identify it
+	 * @param message message to be sent
+	 */
+	@SimpleFunction
+	public void SendMathMessage(String name, long message) {
+		if(!isConnected) {
+			// Can't Run Yet
+		}else {
+			try {
+				JSONObject obj = new JSONObject();
+				obj.put("link_code", this.linkCode);
+				obj.put("name", name);
+				obj.put("type", "math");
+				obj.put("message", message);
+				
+				socket.emit("message", obj.toString());
+			} catch(JSONException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * Sends a LogicMessage to the Link
+	 * @param name name of the message to identify it
+	 * @param message message to be sent
+	 */
+	@SimpleFunction
+	public void SendLogicMessage(String name, boolean message) {
+		if(!isConnected) {
+			// Can't Run Yet
+		}else {
+			try {
+				JSONObject obj = new JSONObject();
+				obj.put("link_code", this.linkCode);
+				obj.put("name", name);
+				obj.put("type", "logic");
+				obj.put("message", message);
+				
+				socket.emit("message", obj.toString());
+			} catch(JSONException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
 	 * Sends a Image to the Link
 	 * @param name name of the image to identify it
 	 * @param image path to image file
@@ -402,6 +470,26 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	@SimpleEvent
 	public void OnTextMessageRecieved(String name, String message) {
 		EventDispatcher.dispatchEvent(this, "OnTextMessageRecieved", name, message);
+	}
+	
+	/**
+	 * Runs when a math based message is received
+	 * @param name identifier for message
+	 * @param message message that was sent
+	 */
+	@SimpleEvent
+	public void OnMathMessageRecieved(String name, long message) {
+		EventDispatcher.dispatchEvent(this, "OnMathMessageRecieved", name, message);
+	}
+	
+	/**
+	 * Runs when a logic based message is received
+	 * @param name identifier for message
+	 * @param message message that was sent
+	 */
+	@SimpleEvent
+	public void OnLogicMessageRecieved(String name, boolean message) {
+		EventDispatcher.dispatchEvent(this, "OnLogicMessageRecieved", name, message);
 	}
 	
 	/**
