@@ -30,11 +30,14 @@ import com.google.appinventor.components.runtime.ComponentContainer;
 import com.google.appinventor.components.runtime.EventDispatcher;
 import com.google.appinventor.components.runtime.util.MediaUtil;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
-import android.net.Uri;
+import android.hardware.Camera;
+import android.hardware.Camera.PreviewCallback;
 import android.os.Environment;
+import android.widget.LinearLayout;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -294,6 +297,33 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		} catch(JSONException e) {
 			e.printStackTrace();
 		}
+		
+	}
+	
+	
+	@SuppressWarnings("deprecation")
+	@SimpleFunction
+	public void StartVideoStream() {
+
+		Camera camera;
+		StreamLinkCamera sLCamera;
+		
+		camera = Camera.open();
+		
+		
+		camera.setPreviewCallback(new PreviewCallback() {
+			
+			public void onPreviewFrame(byte[] data, Camera camera) {
+				
+				// Send to Server
+				// Need to access socket in StreamLink Class
+			}
+			
+		});
+		
+		sLCamera = new StreamLinkCamera(this.container.$context(), camera);
+		
+		this.container.$context().addContentView(sLCamera, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
 		
 	}
 	
