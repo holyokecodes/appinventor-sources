@@ -25,6 +25,7 @@ public class StreamLinkCamera extends SurfaceView implements SurfaceHolder.Callb
 		
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
 		
@@ -33,6 +34,9 @@ public class StreamLinkCamera extends SurfaceView implements SurfaceHolder.Callb
 		camera.setDisplayOrientation(90);
 		params.setRotation(90);
 		params.setPreviewFrameRate(30);
+		params.set("orientation", "portrait");
+		
+		camera.setParameters(params);
 	
 		
 		try {
