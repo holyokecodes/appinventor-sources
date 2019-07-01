@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.Queue;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,9 +32,9 @@ import com.google.appinventor.components.runtime.ComponentContainer;
 import com.google.appinventor.components.runtime.EventDispatcher;
 import com.google.appinventor.components.runtime.util.MediaUtil;
 
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.graphics.drawable.BitmapDrawable;
@@ -53,6 +54,7 @@ Link is a component designed to allow
 devices to communicate across networks.
 */
 
+@SuppressWarnings("deprecation")
 @DesignerComponent(version = 1, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon.png")
 @SimpleObject(external = true)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar")
@@ -72,6 +74,8 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	private boolean isConnected;
 	
 	private ImageView imageView;
+	
+	public Queue<Bitmap> videoBuffer;
 	
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
@@ -259,7 +263,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 			Bitmap bitmap = BitmapFactory.decodeByteArray(byteImage, 0, byteImage.length);
 		
 			imageView.setImageBitmap(bitmap);
-		
 		}
 		
 	}
@@ -329,7 +332,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 	
 	
-	@SuppressWarnings("deprecation")
 	@SimpleFunction
 	public void StartVideoStream() {
 
@@ -358,11 +360,16 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 				    byte[] bytes = out.toByteArray();
 				    final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
 				    
+					Matrix matrix = new Matrix();
+					matrix.postRotate(90);
+					Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+					bitmap.recycle();
+				    
 				    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-					
-					bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
-					
-					byte[] imageBytes = outputStream.toByteArray();
+				    
+				    rotated.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
+				     
+				    byte[] imageBytes = outputStream.toByteArray();
 					
 					String image64 = Base64.encodeToString(imageBytes, false);
 					
@@ -381,10 +388,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 				}catch(JSONException e) {
 					e.printStackTrace();
 				}
-				
-				
-				// Send to Server
-				// Need to access socket in StreamLink Class
 			}
 			
 		});
@@ -430,14 +433,17 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 	
 	/**
-	 * Starts showing the imageview
+	 * Starts playing back the stream
+	 * @param canvas canvas to replace with the imageview
 	 */
 	@SimpleFunction
-	public void OpenVideoPlayback() {
+	public void OpenVideoPlayback(Canvas canvas) {
 		
-		imageView = new ImageView(this.container.$context());
+		imageView = new ImageView(canvas.$form());
 		
-		this.container.$context().addContentView(imageView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+		
+		
+		this.container.$context().addContentView(imageView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.FILL_PARENT));
 	}
 	
 	/**
