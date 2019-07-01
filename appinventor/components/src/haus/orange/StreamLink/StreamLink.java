@@ -383,8 +383,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 					
 					socket.emit("message", obj.toString());
 					
-					System.out.println("New Frame");
-					
 				}catch(JSONException e) {
 					e.printStackTrace();
 				}
@@ -440,8 +438,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	public void OpenVideoPlayback(Canvas canvas) {
 		
 		imageView = new ImageView(canvas.$form());
-		
-		
 		
 		this.container.$context().addContentView(imageView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.FILL_PARENT));
 	}
