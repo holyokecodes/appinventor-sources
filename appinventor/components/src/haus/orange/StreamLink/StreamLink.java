@@ -58,7 +58,7 @@ devices to communicate across networks.
 @DesignerComponent(version = 1, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon.png")
 @SimpleObject(external = true)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar")
-@UsesPermissions(permissionNames = "android.permission.WRITE_EXTERNAL_STORAGE, android.permission.READ_EXTERNAL_STORAGE, android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
+@UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
 	private ComponentContainer container;
@@ -72,10 +72,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	public static String linkCode;
 	
 	private boolean isConnected;
-	
-	private ImageView imageView;
-	
-	public Queue<Bitmap> videoBuffer;
 	
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
@@ -193,14 +189,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 										}
 									});
 									
-								}else if(obj.getString("type").equals("video")) {
-									
-									final String image = obj.getString("message");
-									container.$context().runOnUiThread(new Runnable() {
-										public void run() {
-											ProcessVideoFrame(image);
-										}
-									});
 								}
 							}
 						} catch(JSONException e1) {
@@ -251,19 +239,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		
 		
 		OnImageRecieved(name, file.getPath());
-		
-	}
-	
-	private void ProcessVideoFrame(String base64Image) {
-		
-		if(imageView != null) {
-		
-			byte[] byteImage = Base64.decode(base64Image);
-			
-			Bitmap bitmap = BitmapFactory.decodeByteArray(byteImage, 0, byteImage.length);
-		
-			imageView.setImageBitmap(bitmap);
-		}
 		
 	}
 	
@@ -331,71 +306,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		
 	}
 	
-	
-	@SimpleFunction
-	public void StartVideoStream() {
-
-		Camera camera;
-		StreamLinkCamera sLCamera;
-		
-		camera = Camera.open();
-		
-		
-		camera.setPreviewCallback(new PreviewCallback() {
-			
-			public void onPreviewFrame(byte[] data, Camera camera) {
-				
-				
-				try {
-					
-					Camera.Parameters parameters = camera.getParameters();
-				    int width = parameters.getPreviewSize().width;
-				    int height = parameters.getPreviewSize().height;
-
-				    YuvImage yuv = new YuvImage(data, parameters.getPreviewFormat(), width, height, null);
-
-				    ByteArrayOutputStream out = new ByteArrayOutputStream();
-				    yuv.compressToJpeg(new Rect(0, 0, width, height), 50, out);
-
-				    byte[] bytes = out.toByteArray();
-				    final Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-				    
-					Matrix matrix = new Matrix();
-					matrix.postRotate(90);
-					Bitmap rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
-					bitmap.recycle();
-				    
-				    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-				    
-				    rotated.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
-				     
-				    byte[] imageBytes = outputStream.toByteArray();
-					
-					String image64 = Base64.encodeToString(imageBytes, false);
-					
-					
-					JSONObject obj = new JSONObject();
-					obj.put("link_code", StreamLink.linkCode);
-					// Need to pass through name
-					obj.put("name", "video");
-					obj.put("type", "video");
-					obj.put("message", image64);
-					
-					socket.emit("message", obj.toString());
-					
-				}catch(JSONException e) {
-					e.printStackTrace();
-				}
-			}
-			
-		});
-		
-		sLCamera = new StreamLinkCamera(this.container.$context(), camera);
-		
-		this.container.$context().addContentView(sLCamera, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
-		
-	}
-	
 	/**
 	 * Connects the device to a Link
 	 * @param linkCode link code for the specified Link
@@ -430,17 +340,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		return isConnected;
 	}
 	
-	/**
-	 * Starts playing back the stream
-	 * @param canvas canvas to replace with the imageview
-	 */
-	@SimpleFunction
-	public void OpenVideoPlayback(Canvas canvas) {
-		
-		imageView = new ImageView(canvas.$form());
-		
-		this.container.$context().addContentView(imageView, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.FILL_PARENT));
-	}
 	
 	/**
 	 * Sends a TextMessage to the Link
@@ -554,6 +453,21 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	
+	@SimpleFunction
+	public void StartLiveStream() {
+		
+		Camera camera;
+		StreamLinkCamera sLCamera;
+		
+		camera = Camera.open();
+
+		sLCamera = new StreamLinkCamera(this.container.$context(), camera);
+		
+		this.container.$context().addContentView(sLCamera, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+		
 	}
 	
 	/**
