@@ -30,8 +30,10 @@ import com.google.appinventor.components.runtime.Canvas;
 import com.google.appinventor.components.runtime.Component;
 import com.google.appinventor.components.runtime.ComponentContainer;
 import com.google.appinventor.components.runtime.EventDispatcher;
+import com.google.appinventor.components.runtime.PermissionResultHandler;
 import com.google.appinventor.components.runtime.util.MediaUtil;
 
+import android.Manifest;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -73,6 +75,8 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	
 	private boolean isConnected;
 	
+	private boolean havePermission;
+	
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
 
@@ -82,6 +86,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		deviceID = "0000";
 		linkCode = "0000";
 		isConnected = false;
+		havePermission = false;
 		
 	}
 	
@@ -420,6 +425,34 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 */
 	@SimpleFunction
 	public void SendImage(String name, String image) {
+		
+		// Only for rerunning function on permission granted
+		final String fName = name;
+		final String fImage = image;
+		
+		if(!havePermission) {
+			form.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					
+					form.askPermission(Manifest.permission.CAMERA,
+							new PermissionResultHandler() {
+						@Override
+						public void HandlePermissionResponse(String permission, boolean granted) {
+							if (granted) {
+								havePermission = true;
+								SendImage(fName, fImage);
+							} else {
+								form.dispatchPermissionDeniedEvent(form, "TakePicture",
+										Manifest.permission.CAMERA);
+							}
+						}
+					});
+				}
+			});
+		}
+		
+		
 		if(!isConnected) {
 			// Can't Run Yet
 		}else {
@@ -459,14 +492,38 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	@SimpleFunction
 	public void StartLiveStream() {
 		
-		Camera camera;
-		StreamLinkCamera sLCamera;
+		if(!havePermission) {
+			form.runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					form.askPermission(Manifest.permission.CAMERA,
+							new PermissionResultHandler() {
+						@Override
+						public void HandlePermissionResponse(String permission, boolean granted) {
+							if (granted) {
+								havePermission = true;
+								StartLiveStream();
+							} else {
+								form.dispatchPermissionDeniedEvent(form, "TakePicture",
+										Manifest.permission.CAMERA);
+							}
+						}
+					});
+				}
+			});
+		}
 		
-		camera = Camera.open();
-
-		sLCamera = new StreamLinkCamera(this.container.$context(), camera);
 		
-		this.container.$context().addContentView(sLCamera, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+		if(isConnected) {
+			Camera camera;
+			StreamLinkCamera sLCamera;
+			
+			camera = Camera.open();
+	
+			sLCamera = new StreamLinkCamera(this.container.$context(), camera);
+			
+			this.container.$context().addContentView(sLCamera, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+		}
 		
 	}
 	
