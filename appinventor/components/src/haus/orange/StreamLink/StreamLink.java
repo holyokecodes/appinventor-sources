@@ -64,33 +64,32 @@ devices to communicate across networks.
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
 	private ComponentContainer container;
-	
+
 	public static Socket socket;
-	
+
 	public static String serverIP;
-	
+
 	public static String deviceID;
-	
+
 	public static String linkCode;
-	
+
 	private boolean isConnected;
-	
+
 	private boolean havePermission;
-	
+
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
 
 		this.container = container;
-		
+
 		serverIP = "http://192.168.86.68:3000";
 		deviceID = "0000";
 		linkCode = "0000";
 		isConnected = false;
 		havePermission = false;
-		
+
 	}
-	
-	
+
 	private void InitSocketIO() {
 		try {
 			socket = IO.socket(serverIP);
@@ -99,19 +98,19 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		}
 		socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
 
-			  @Override
-			  public void call(Object... args) {
-				  // Connected
-				  isConnected = true;
-			  }
+			@Override
+			public void call(Object... args) {
+				// Connected
+				isConnected = true;
+			}
 
-			}).on("linkcreated", new Emitter.Listener() {
+		}).on("linkcreated", new Emitter.Listener() {
 
-			  @Override
-			  public void call(Object... args) {
+			@Override
+			public void call(Object... args) {
 				try {
 					final JSONObject obj = new JSONObject((String) args[0]);
-					if(obj.has("link_code")) {
+					if (obj.has("link_code")) {
 						linkCode = obj.getString("link_code");
 						container.$context().runOnUiThread(new Runnable() {
 							public void run() {
@@ -122,118 +121,115 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 								}
 							}
 						});
-					  }
+					}
 				} catch (JSONException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
-			  }
+			}
 
-			}).on("linkjoined", new Emitter.Listener() {
+		}).on("linkjoined", new Emitter.Listener() {
 
-				  @Override
-				  public void call(Object... args) {
-					try {
-						final JSONObject obj = new JSONObject((String) args[0]);
-						if(obj.has("success")) {
-							if(obj.getBoolean("success")) {
-								linkCode = obj.getString("link_code");
-								container.$context().runOnUiThread(new Runnable() {
-									public void run() {
-										OnLinkConnected();
-									}
-								});
-							}
-						  }
-					} catch (JSONException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				  }
-
-				}).on("newmessage", new Emitter.Listener() {
-					
-					@Override
-					public void call(Object... args) {
-						try {
-							final JSONObject obj = new JSONObject((String) args[0]);
-							if(obj.has("link_code")) {
-								if(obj.getString("type").equals("string")) {
-									final String name = obj.getString("name");
-									final String message = obj.getString("message");
-									container.$context().runOnUiThread(new Runnable() {
-										public void run() {
-											OnTextMessageRecieved(name, message);
-										}
-									});
-								}else if(obj.getString("type").equals("image")) {
-									final String name = obj.getString("name");
-									final String image = obj.getString("message");
-									container.$context().runOnUiThread(new Runnable() {
-										public void run() {
-											ProcessRecievedImage(name, image);
-										}
-									});
-								}else if(obj.getString("type").equals("math")){
-								
-									final String name = obj.getString("name");
-									final long message = (long)obj.getDouble("message");
-									container.$context().runOnUiThread(new Runnable() {
-										public void run() {
-											OnMathMessageRecieved(name, message);
-										}
-									});
-									
-								}else if(obj.getString("type").equals("logic")){
-								
-									final String name = obj.getString("name");
-									final boolean message = obj.getBoolean("message");
-									container.$context().runOnUiThread(new Runnable() {
-										public void run() {
-											OnLogicMessageRecieved(name, message);
-										}
-									});
-									
+			@Override
+			public void call(Object... args) {
+				try {
+					final JSONObject obj = new JSONObject((String) args[0]);
+					if (obj.has("success")) {
+						if (obj.getBoolean("success")) {
+							linkCode = obj.getString("link_code");
+							container.$context().runOnUiThread(new Runnable() {
+								public void run() {
+									OnLinkConnected();
 								}
-							}
-						} catch(JSONException e1) {
-							e1.printStackTrace();
+							});
 						}
-						
 					}
-				}).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
+				} catch (JSONException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
 
-			  @Override
-			  public void call(Object... args) {
-				  isConnected = false;
-			  }
+		}).on("newmessage", new Emitter.Listener() {
 
-			});
-			socket.connect();
+			@Override
+			public void call(Object... args) {
+				try {
+					final JSONObject obj = new JSONObject((String) args[0]);
+					if (obj.has("link_code")) {
+						if (obj.getString("type").equals("string")) {
+							final String name = obj.getString("name");
+							final String message = obj.getString("message");
+							container.$context().runOnUiThread(new Runnable() {
+								public void run() {
+									OnTextMessageRecieved(name, message);
+								}
+							});
+						} else if (obj.getString("type").equals("image")) {
+							final String name = obj.getString("name");
+							final String image = obj.getString("message");
+							container.$context().runOnUiThread(new Runnable() {
+								public void run() {
+									ProcessRecievedImage(name, image);
+								}
+							});
+						} else if (obj.getString("type").equals("math")) {
+
+							final String name = obj.getString("name");
+							final long message = (long) obj.getDouble("message");
+							container.$context().runOnUiThread(new Runnable() {
+								public void run() {
+									OnMathMessageRecieved(name, message);
+								}
+							});
+
+						} else if (obj.getString("type").equals("logic")) {
+
+							final String name = obj.getString("name");
+							final boolean message = obj.getBoolean("message");
+							container.$context().runOnUiThread(new Runnable() {
+								public void run() {
+									OnLogicMessageRecieved(name, message);
+								}
+							});
+
+						}
+					}
+				} catch (JSONException e1) {
+					e1.printStackTrace();
+				}
+
+			}
+		}).on(Socket.EVENT_DISCONNECT, new Emitter.Listener() {
+
+			@Override
+			public void call(Object... args) {
+				isConnected = false;
+			}
+
+		});
+		socket.connect();
 	}
-	
-	
+
 	private void ProcessRecievedImage(String name, String base64Image) {
 		Date date = new Date();
-		
+
 		byte[] byteImage = Base64.decode(base64Image);
-		
+
 		Bitmap bitmap = BitmapFactory.decodeByteArray(byteImage, 0, byteImage.length);
-		
+
 		OutputStream fOut = null;
-		
+
 		File file = new File(Environment.getExternalStorageDirectory(),
-		        "/Pictures/app_inventor_" + date.getTime()
-		        + ".jpg");
-		
+				"/Pictures/app_inventor_" + date.getTime() + ".jpg");
+
 		try {
 			fOut = new FileOutputStream(file);
-			
-			
+
 			bitmap.compress(Bitmap.CompressFormat.JPEG, 85, fOut);
 			fOut.flush();
 			fOut.close();
-			
+
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -241,12 +237,11 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
+
 		OnImageRecieved(name, file.getPath());
-		
+
 	}
-	
+
 	/**
 	 * Returns the Server IP as a string.
 	 *
@@ -267,7 +262,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	public void ServerIP(String ip) {
 		serverIP = ip;
 	}
-	
+
 	/**
 	 * Returns the Device ID as a string.
 	 *
@@ -288,254 +283,256 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	public void DeviceID(String id) {
 		deviceID = id;
 	}
-	
+
 	/**
 	 * Creates a link with the password specified
+	 * 
 	 * @param password password to apply to the link
 	 */
 	@SimpleFunction
 	public void CreateLink(String password) {
-		
-		if(!isConnected) {
+
+		if (!isConnected) {
 			InitSocketIO();
 		}
-		
+
 		try {
 			JSONObject obj = new JSONObject();
 			obj.put("device_id", DeviceID());
 			obj.put("link_password", password);
 			socket.emit("createlink", obj.toString());
-		} catch(JSONException e) {
+		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	/**
 	 * Connects the device to a Link
+	 * 
 	 * @param linkCode link code for the specified Link
 	 * @param password password for the specified Link
 	 */
 	@SimpleFunction
 	public void ConnectToLink(String linkCode, String password) {
-		
-		if(!isConnected) {
+
+		if (!isConnected) {
 			InitSocketIO();
 		}
-		
+
 		try {
 			JSONObject obj = new JSONObject();
 			obj.put("device_id", DeviceID());
 			obj.put("link_code", linkCode);
 			obj.put("link_password", password);
-			
+
 			socket.emit("joinlink", obj.toString());
-			
-		} catch(JSONException e) {
+
+		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * Checks if the device is connected to the server
+	 * 
 	 * @return connection status
 	 */
 	@SimpleFunction
 	public boolean IsConnected() {
 		return isConnected;
 	}
-	
-	
+
 	/**
 	 * Sends a TextMessage to the Link
-	 * @param name name of the message to identify it
+	 * 
+	 * @param name    name of the message to identify it
 	 * @param message message to be sent
 	 */
 	@SimpleFunction
 	public void SendTextMessage(String name, String message) {
-		if(!isConnected) {
+		if (!isConnected) {
 			// Can't Run Yet
-		}else {
+		} else {
 			try {
 				JSONObject obj = new JSONObject();
 				obj.put("link_code", linkCode);
 				obj.put("name", name);
 				obj.put("type", "string");
 				obj.put("message", message);
-				
+
 				socket.emit("message", obj.toString());
-			} catch(JSONException e) {
+			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	
+
 	/**
 	 * Sends a MathMessage to the Link
-	 * @param name name of the message to identify it
+	 * 
+	 * @param name    name of the message to identify it
 	 * @param message message to be sent
 	 */
 	@SimpleFunction
 	public void SendMathMessage(String name, long message) {
-		if(!isConnected) {
+		if (!isConnected) {
 			// Can't Run Yet
-		}else {
+		} else {
 			try {
 				JSONObject obj = new JSONObject();
 				obj.put("link_code", linkCode);
 				obj.put("name", name);
 				obj.put("type", "math");
 				obj.put("message", message);
-				
+
 				socket.emit("message", obj.toString());
-			} catch(JSONException e) {
+			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	
+
 	/**
 	 * Sends a LogicMessage to the Link
-	 * @param name name of the message to identify it
+	 * 
+	 * @param name    name of the message to identify it
 	 * @param message message to be sent
 	 */
 	@SimpleFunction
 	public void SendLogicMessage(String name, boolean message) {
-		if(!isConnected) {
+		if (!isConnected) {
 			// Can't Run Yet
-		}else {
+		} else {
 			try {
 				JSONObject obj = new JSONObject();
 				obj.put("link_code", linkCode);
 				obj.put("name", name);
 				obj.put("type", "logic");
 				obj.put("message", message);
-				
+
 				socket.emit("message", obj.toString());
-			} catch(JSONException e) {
+			} catch (JSONException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	
+
 	/**
 	 * Sends a Image to the Link
-	 * @param name name of the image to identify it
+	 * 
+	 * @param name  name of the image to identify it
 	 * @param image path to image file
 	 */
 	@SimpleFunction
 	public void SendImage(String name, String image) {
-		
+
 		// Only for rerunning function on permission granted
 		final String fName = name;
 		final String fImage = image;
-		
-		if(!havePermission) {
+
+		if (!havePermission) {
 			form.runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					
-					form.askPermission(Manifest.permission.CAMERA,
-							new PermissionResultHandler() {
+
+					form.askPermission(Manifest.permission.CAMERA, new PermissionResultHandler() {
 						@Override
 						public void HandlePermissionResponse(String permission, boolean granted) {
 							if (granted) {
 								havePermission = true;
 								SendImage(fName, fImage);
 							} else {
-								form.dispatchPermissionDeniedEvent(form, "TakePicture",
-										Manifest.permission.CAMERA);
+								form.dispatchPermissionDeniedEvent(form, "TakePicture", Manifest.permission.CAMERA);
 							}
 						}
 					});
 				}
 			});
+			return;
 		}
-		
-		
-		if(!isConnected) {
+
+		if (!isConnected) {
 			// Can't Run Yet
-		}else {
-			
+		} else {
+
 			try {
-				
+
 				BitmapDrawable bitmapDraw = MediaUtil.getBitmapDrawable(container.$form(), image);
-				
+
 				Bitmap bitmap = bitmapDraw.getBitmap();
-				
-				
+
 				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-				
+
 				bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
-				
+
 				byte[] imageBytes = outputStream.toByteArray();
-				
+
 				String image64 = Base64.encodeToString(imageBytes, false);
-				
+
 				JSONObject obj = new JSONObject();
 				obj.put("link_code", linkCode);
 				obj.put("name", name);
 				obj.put("type", "image");
 				obj.put("message", image64);
-				
+
 				socket.emit("message", obj.toString());
-				
-			} catch(JSONException e) {
+
+			} catch (JSONException e) {
 				e.printStackTrace();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-	
-	
+
 	@SimpleFunction
 	public void StartLiveStream() {
-		
-		if(!havePermission) {
+
+		// NEED TO REQUEST MIC PERMISSION
+		if (!havePermission) {
 			form.runOnUiThread(new Runnable() {
 				@Override
 				public void run() {
-					form.askPermission(Manifest.permission.CAMERA,
-							new PermissionResultHandler() {
+					form.askPermission(Manifest.permission.CAMERA, new PermissionResultHandler() {
 						@Override
 						public void HandlePermissionResponse(String permission, boolean granted) {
 							if (granted) {
 								havePermission = true;
 								StartLiveStream();
 							} else {
-								form.dispatchPermissionDeniedEvent(form, "TakePicture",
-										Manifest.permission.CAMERA);
+								form.dispatchPermissionDeniedEvent(form, "TakePicture", Manifest.permission.CAMERA);
 							}
 						}
 					});
 				}
 			});
+			return;
 		}
-		
-		
-		if(isConnected) {
-			Camera camera;
+
+		if (isConnected) {
 			StreamLinkCamera sLCamera;
-			
-			camera = Camera.open();
-	
-			sLCamera = new StreamLinkCamera(this.container.$context(), camera);
-			
-			this.container.$context().addContentView(sLCamera, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+
+			sLCamera = new StreamLinkCamera(this.container.$context());
+
+			this.container.$context().addContentView(sLCamera, new LinearLayout.LayoutParams(
+					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+
+			sLCamera.startRecording();
 		}
-		
+
 	}
-	
+
 	/**
 	 * Runs after CreateLink is successful
+	 * 
 	 * @param linkCode
 	 */
 	@SimpleEvent
 	public void OnLinkCreated(String linkCode) {
 		EventDispatcher.dispatchEvent(this, "OnLinkCreated", linkCode);
 	}
-	
+
 	/**
 	 * Runs after ConnectToLink is successful
 	 */
@@ -543,40 +540,44 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	public void OnLinkConnected() {
 		EventDispatcher.dispatchEvent(this, "OnLinkConnected");
 	}
-	
+
 	/**
 	 * Runs when a text based message is received
-	 * @param name identifier for message
+	 * 
+	 * @param name    identifier for message
 	 * @param message message that was sent
 	 */
 	@SimpleEvent
 	public void OnTextMessageRecieved(String name, String message) {
 		EventDispatcher.dispatchEvent(this, "OnTextMessageRecieved", name, message);
 	}
-	
+
 	/**
 	 * Runs when a math based message is received
-	 * @param name identifier for message
+	 * 
+	 * @param name    identifier for message
 	 * @param message message that was sent
 	 */
 	@SimpleEvent
 	public void OnMathMessageRecieved(String name, long message) {
 		EventDispatcher.dispatchEvent(this, "OnMathMessageRecieved", name, message);
 	}
-	
+
 	/**
 	 * Runs when a logic based message is received
-	 * @param name identifier for message
+	 * 
+	 * @param name    identifier for message
 	 * @param message message that was sent
 	 */
 	@SimpleEvent
 	public void OnLogicMessageRecieved(String name, boolean message) {
 		EventDispatcher.dispatchEvent(this, "OnLogicMessageRecieved", name, message);
 	}
-	
+
 	/**
 	 * Runs when a image is received
-	 * @param name identifier for image
+	 * 
+	 * @param name  identifier for image
 	 * @param image path to the image file
 	 */
 	@SimpleEvent
