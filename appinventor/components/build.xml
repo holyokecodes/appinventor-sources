@@ -220,7 +220,7 @@
       	<pathelement location="${lib.dir}/socketio/socket.io-client-1.0.0.jar" />
       	<pathelement location="${lib.dir}/okio/okio-1.13.0.jar" />
       	<pathelement location="${lib.dir}/okhttp/okhttp-3.8.1.jar" />
-      	<pathelement location="${lib.dir}/rtmpstreamer/rtmp-rtsp-stream-client-java-1.6.2.jar" />
+      	<pathelement location="${lib.dir}/rtmpstreamer/rtmp-stream-client-1.6.2.jar" />
         <pathelement location="${lib.dir}/firebase/firebase-client-android-2.5.0.jar" />
         <pathelement location="${lib.dir}/oauth/google-api-client-1.10.3-beta.jar" />
         <pathelement location="${lib.dir}/oauth/google-api-client-android2-1.10.3-beta.jar" />
@@ -346,7 +346,7 @@
           <pathelement location="${lib.dir}/socketio/socket.io-client-1.0.0.jar" />
           <pathelement location="${lib.dir}/okhttp/okhttp-3.8.1.jar" />
           <pathelement location="${lib.dir}/okio/okio-1.13.0.jar" />
-          <pathelement location="${lib.dir}/rtmpstreamer/rtmp-rtsp-stream-client-java-1.6.2.jar" />
+          <pathelement location="${lib.dir}/rtmpstreamer/rtmp-stream-client-1.6.2.jar" />
           <pathelement location="${lib.dir}/twitter/twitter4j-media-support-3.0.5.jar" />
           <pathelement location="${lib.dir}/apache-http/httpcore-4.3.2.jar" />
           <pathelement location="${lib.dir}/apache-http/httpmime-4.3.4.jar" />
