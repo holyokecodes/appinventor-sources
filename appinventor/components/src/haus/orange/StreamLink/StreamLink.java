@@ -66,6 +66,8 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	private boolean isConnected;
 
 	private boolean havePermission;
+	
+	private 
 
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
