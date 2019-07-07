@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.Date;
-import java.util.Queue;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,7 +25,6 @@ import com.google.appinventor.components.annotations.UsesPermissions;
 import com.google.appinventor.components.common.ComponentCategory;
 import com.google.appinventor.components.common.PropertyTypeConstants;
 import com.google.appinventor.components.runtime.AndroidNonvisibleComponent;
-import com.google.appinventor.components.runtime.Canvas;
 import com.google.appinventor.components.runtime.Component;
 import com.google.appinventor.components.runtime.ComponentContainer;
 import com.google.appinventor.components.runtime.EventDispatcher;
@@ -36,15 +34,8 @@ import com.google.appinventor.components.runtime.util.MediaUtil;
 import android.Manifest;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
-import android.graphics.Rect;
-import android.graphics.YuvImage;
 import android.graphics.drawable.BitmapDrawable;
-import android.hardware.Camera;
-import android.hardware.Camera.PreviewCallback;
 import android.os.Environment;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -56,11 +47,10 @@ Link is a component designed to allow
 devices to communicate across networks.
 */
 
-@SuppressWarnings("deprecation")
 @DesignerComponent(version = 1, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon.png")
 @SimpleObject(external = true)
-@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar")
-@UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.ACCESS_NETWORK_STATE")
+@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, rtmpstreamer.jar")
+@UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
 	private ComponentContainer container;
@@ -488,39 +478,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 	@SimpleFunction
 	public void StartLiveStream() {
-
-		// NEED TO REQUEST MIC PERMISSION
-		if (!havePermission) {
-			form.runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
-					form.askPermission(Manifest.permission.CAMERA, new PermissionResultHandler() {
-						@Override
-						public void HandlePermissionResponse(String permission, boolean granted) {
-							if (granted) {
-								havePermission = true;
-								StartLiveStream();
-							} else {
-								form.dispatchPermissionDeniedEvent(form, "TakePicture", Manifest.permission.CAMERA);
-							}
-						}
-					});
-				}
-			});
-			return;
-		}
-
-		if (isConnected) {
-			StreamLinkCamera sLCamera;
-
-			sLCamera = new StreamLinkCamera(this.container.$context());
-
-			this.container.$context().addContentView(sLCamera, new LinearLayout.LayoutParams(
-					LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
-
-			sLCamera.startRecording();
-		}
-
+		
 	}
 
 	/**
