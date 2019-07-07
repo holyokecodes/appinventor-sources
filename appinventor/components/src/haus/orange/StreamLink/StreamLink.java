@@ -36,6 +36,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Environment;
+import android.widget.LinearLayout;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -49,7 +50,7 @@ devices to communicate across networks.
 
 @DesignerComponent(version = 1, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon.png")
 @SimpleObject(external = true)
-@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, rtmpstreamer.jar")
+@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, encoder.jar, rtmp.jar, rtplibrary.jar, rtsp.jar")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
@@ -473,6 +474,11 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 	@SimpleFunction
 	public void StartLiveStream() {
+		
+		final StreamLinkCamera camera = new StreamLinkCamera(this.container.$context());;
+		
+		this.container.$context().addContentView(camera, new LinearLayout.LayoutParams(
+				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
 		
 	}
 
