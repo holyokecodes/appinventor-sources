@@ -53,21 +53,14 @@ devices to communicate across networks.
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
-	private ComponentContainer container;
-
 	public static Socket socket;
-
 	public static String serverIP;
-
 	public static String deviceID;
-
 	public static String linkCode;
-
+	private ComponentContainer container;
 	private boolean isConnected;
 
 	private boolean havePermission;
-	
-	private 
 
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
