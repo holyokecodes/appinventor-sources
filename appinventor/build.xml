@@ -113,6 +113,7 @@
       	<pathelement location="lib/socketio/socket.io-client-1.0.0.jar" />
       	<pathelement location="lib/okio/okio-1.13.0.jar" />
       	<pathelement location="lib/okhttp/okhttp-3.8.1.jar" />
+      	<pathelement location="lib/rtmpstreamer/rtmp-rtsp-stream-client-java-1.6.2.jar" />
         <pathelement location="lib/android-26/android.jar" />
         <pathelement location="lib/android/tools/ddmlib.jar"/>
         <pathelement location="lib/bouncycastle/bcprov-jdk15on-149.jar"/>
