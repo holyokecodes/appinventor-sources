@@ -34,8 +34,13 @@ import com.google.appinventor.components.runtime.util.MediaUtil;
 import android.Manifest;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Environment;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewManager;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import io.socket.client.IO;
 import io.socket.client.Socket;
@@ -552,10 +557,59 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	@SimpleFunction
 	public void OpenStreamWindow() {
 		
-		final StreamLinkCamera camera = new StreamLinkCamera(this.container.$context(), rtmpServerURL, streamKey);;
 		
-		this.container.$context().addContentView(camera, new LinearLayout.LayoutParams(
-				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+		final LinearLayout layout = new LinearLayout(this.container.$context());
+		layout.setBackgroundColor(Color.WHITE);
+		layout.setOrientation(LinearLayout.VERTICAL);
+		
+		
+		final StreamLinkCamera camera = new StreamLinkCamera(this.container.$context(), rtmpServerURL, streamKey);
+		camera.setZOrderOnTop(false);
+		
+		final Button startStopStreamButton = new Button(this.container.$context());
+		startStopStreamButton.setText("Start Stream");
+		startStopStreamButton.setOnClickListener( new OnClickListener() {
+
+			@Override
+			public void onClick(View arg0) {
+				
+				
+				if(camera.isStreaming()) {
+					startStopStreamButton.setText("Start Stream");
+					camera.stopStreaming();
+				}else {
+					startStopStreamButton.setText("Stop Stream");
+					camera.startStreaming();
+				}
+				
+				
+				
+			}
+			
+		});
+		
+		Button closeButton = new Button(this.container.$context());
+		closeButton.setText("Close");
+		closeButton.setOnClickListener( new OnClickListener() {
+
+			@Override
+			public void onClick(View arg0) {
+				
+				camera.closeCamera();
+				((ViewManager)layout.getParent()).removeView(layout);
+				
+			}
+			
+		});
+		
+		layout.addView(closeButton, params);
+		layout.addView(startStopStreamButton, params);
+		layout.addView(camera, params);
+		
+		LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
+		
+		this.container.$context().addContentView(layout, layoutParams);
 		
 	}
 

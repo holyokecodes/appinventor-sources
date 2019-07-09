@@ -33,6 +33,9 @@ public class StreamLinkCamera extends SurfaceView implements Callback, ConnectCh
 		
 	}
 	
+	public boolean isStreaming() {
+		return rtmpCamera.isStreaming();
+	}
 	
 	public void startStreaming() {
 		
@@ -46,12 +49,22 @@ public class StreamLinkCamera extends SurfaceView implements Callback, ConnectCh
 		}
 	}
 	
+	public void stopStreaming() {
+		rtmpCamera.stopStream();
+	}
+	
+	public void closeCamera() {
+		if(rtmpCamera.isStreaming()) {
+			rtmpCamera.stopStream();
+		}
+		rtmpCamera.stopPreview();
+	}
+	
 
 	@Override
 	public void surfaceChanged(SurfaceHolder arg0, int arg1, int arg2, int arg3) {
 		
 		rtmpCamera.startPreview();
-		startStreaming();
 		
 	}
 
