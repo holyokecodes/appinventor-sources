@@ -74,7 +74,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 		this.container = container;
 
-		serverIP = "http://192.168.86.68:3000";
+		serverIP = "http://streamlink.orange.haus:3000";
 		customServerIP = "";
 		rtmpServerURL = "rtmp://a.rtmp.youtube.com/live2";
 		deviceID = "0000";
