@@ -55,12 +55,18 @@ devices to communicate across networks.
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
 	public static Socket socket;
+	public static String customServerIP;
 	public static String serverIP;
 	public static String deviceID;
 	public static String linkCode;
+	public static boolean useCustomServer;
+	public static String rtmpServerURL;
+	public static String streamKey;
+	
+	
+	
 	private ComponentContainer container;
 	private boolean isConnected;
-
 	private boolean havePermission;
 
 	public StreamLink(ComponentContainer container) {
@@ -69,16 +75,24 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		this.container = container;
 
 		serverIP = "http://192.168.86.68:3000";
+		customServerIP = "";
+		rtmpServerURL = "rtmp://a.rtmp.youtube.com/live2";
 		deviceID = "0000";
 		linkCode = "0000";
 		isConnected = false;
 		havePermission = false;
+		useCustomServer = false;
 
 	}
 
 	private void InitSocketIO() {
 		try {
-			socket = IO.socket(serverIP);
+			
+			if(!useCustomServer) {
+				socket = IO.socket(serverIP);
+			}else {
+				socket = IO.socket(customServerIP);
+			}
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
@@ -228,27 +242,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 	}
 
-	/**
-	 * Returns the Server IP as a string.
-	 *
-	 * @return serverip as string.
-	 */
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for StreamLink")
-	public String ServerIP() {
-		return serverIP;
-	}
-
-	/**
-	 * Specifies the Server IP.
-	 *
-	 * @param ip server ip of the StreamLink
-	 */
-	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "http://192.168.86.68:3000")
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
-	public void ServerIP(String ip) {
-		serverIP = ip;
-	}
-
+	
 	/**
 	 * Returns the Device ID as a string.
 	 *
@@ -268,6 +262,86 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
 	public void DeviceID(String id) {
 		deviceID = id;
+	}
+	
+	/**
+	 * Returns if StreamLink is set to use a custom server
+	 * 
+	 * @return useCustomServer
+	 */
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Use a custom StreamLink Server")
+	public boolean UseCustomServer() {
+		return useCustomServer;
+	}
+	
+	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN, defaultValue = "false")
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
+	public void UseCustomServer(boolean useCustom) {
+		useCustomServer = useCustom;
+	}
+	
+	
+	/**
+	 * Returns the Server IP as a string.
+	 *
+	 * @return server ip as string.
+	 */
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for StreamLink")
+	public String CustomServerIP() {
+		return customServerIP;
+	}
+
+	/**
+	 * Specifies the Server IP.
+	 *
+	 * @param
+	 */
+	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "")
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
+	public void CustomServerIP(String ip) {
+		customServerIP = ip;
+	}
+	
+	/**
+	 * Returns the RTMP Server IP as a string.
+	 *
+	 * @return serverip as string.
+	 */
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for RTMP")
+	public String RTMPServerURL() {
+		return rtmpServerURL;
+	}
+
+	/**
+	 * Specifies the RTMP Server IP.
+	 *
+	 * @param
+	 */
+	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "rtmp://a.rtmp.youtube.com/live2")
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
+	public void RTMPServerURL(String url) {
+		rtmpServerURL = url;
+	}
+	
+	/**
+	 * Returns the RTMP Stream Key as a string.
+	 *
+	 * @return serverip as string.
+	 */
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for RTMP")
+	public String StreamKey() {
+		return streamKey;
+	}
+
+	/**
+	 * Specifies the RTMP Stream Key.
+	 *
+	 * @param
+	 */
+	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "")
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
+	public void StreamKey(String key) {
+		streamKey = key;
 	}
 
 	/**
@@ -472,10 +546,13 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		}
 	}
 
+	/**
+	 * Opens the custom window to Control RTMP Streaming
+	 */
 	@SimpleFunction
-	public void StartLiveStream() {
+	public void OpenStreamWindow() {
 		
-		final StreamLinkCamera camera = new StreamLinkCamera(this.container.$context());;
+		final StreamLinkCamera camera = new StreamLinkCamera(this.container.$context(), rtmpServerURL, streamKey);;
 		
 		this.container.$context().addContentView(camera, new LinearLayout.LayoutParams(
 				LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));

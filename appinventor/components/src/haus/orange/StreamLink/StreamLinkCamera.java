@@ -15,11 +15,18 @@ public class StreamLinkCamera extends SurfaceView implements Callback, ConnectCh
 	
 	private SurfaceHolder holder;
 	
-	public StreamLinkCamera(Context context) {
+	private String rtmpServer;
+	private String streamKey;
+	
+	public StreamLinkCamera(Context context, String RTMPServer, String StreamKey) {
 		super(context);
 		
 		holder = getHolder();
 		holder.addCallback(this);
+		
+		rtmpServer = RTMPServer;
+		streamKey = StreamKey;
+		
 		
 		rtmpCamera = new RtmpCamera1(this, this);
 		rtmpCamera.setReTries(10);
@@ -32,7 +39,7 @@ public class StreamLinkCamera extends SurfaceView implements Callback, ConnectCh
 		if(!rtmpCamera.isStreaming()) {
 			
 			if(rtmpCamera.prepareAudio() && rtmpCamera.prepareVideo()) {
-				rtmpCamera.startStream("rtmp://ingest-hkg.mixer.com:1935/beam/64808445-3wsfqswd9w5qzovt7nuwdsagldfp6ihf");
+				rtmpCamera.startStream(rtmpServer + "/" + streamKey);
 			}else {
 				System.out.println("This device doesn't support streaming");
 			}
