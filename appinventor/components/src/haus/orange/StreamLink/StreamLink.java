@@ -275,15 +275,20 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 	
 	/**
-	 * Returns if StreamLink is set to use a custom server
+	 * Should StreamLink use a custom server?
 	 * 
-	 * @return useCustomServer
+	 * @return true if a custom server should be used
 	 */
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Use a custom StreamLink Server")
 	public boolean UseCustomServer() {
 		return useCustomServer;
 	}
 	
+	/**
+	 * Should StreamLink use a customer server?
+	 * 
+	 * @param useCustom set to true if a custom server should be used
+	 */
 	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN, defaultValue = "false")
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
 	public void UseCustomServer(boolean useCustom) {
@@ -292,9 +297,9 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	
 	
 	/**
-	 * Returns the Server IP as a string.
+	 * Returns the custom servers IP address
 	 *
-	 * @return server ip as string.
+	 * @return the server ip address as a string
 	 */
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for StreamLink")
 	public String CustomServerIP() {
@@ -302,7 +307,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 
 	/**
-	 * Specifies the Server IP.
+	 * Sets the custom servers IP address
 	 *
 	 * @param
 	 */
