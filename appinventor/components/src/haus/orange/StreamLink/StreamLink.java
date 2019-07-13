@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.UUID;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,6 +33,9 @@ import com.google.appinventor.components.runtime.PermissionResultHandler;
 import com.google.appinventor.components.runtime.util.MediaUtil;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -62,7 +66,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	public static Socket socket;
 	public static String customServerIP;
 	public static String serverIP;
-	public static String deviceID;
+	private static String deviceID;
 	public static String linkCode;
 	public static boolean useCustomServer;
 	public static String rtmpServerURL;
@@ -82,12 +86,31 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		serverIP = "http://streamlink.orange.haus:3000";
 		customServerIP = "";
 		rtmpServerURL = "rtmp://a.rtmp.youtube.com/live2";
-		deviceID = "0000";
+		deviceID = getDeviceID();
 		linkCode = "0000";
 		isConnected = false;
 		havePermission = false;
 		useCustomServer = false;
 
+	}
+	
+	private String getDeviceID() {
+		
+		SharedPreferences prefs = this.container.$context().getSharedPreferences("haus.orange.streamlink", Context.MODE_PRIVATE);
+		
+		String foundID = prefs.getString("deviceID", "none");
+		
+		if(foundID.equals("none")) {
+			foundID = UUID.randomUUID().toString();
+			
+			Editor editor = prefs.edit();
+			
+			editor.putString("deviceID", foundID);
+			editor.commit();
+		}
+		
+		
+		return foundID;
 	}
 
 	private void InitSocketIO() {
@@ -120,7 +143,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 						container.$context().runOnUiThread(new Runnable() {
 							public void run() {
 								try {
-									OnLinkCreated(obj.getString("link_code"));
+									OnLinkCreated(obj.getString("link_code"), obj.getString("link_description"));
 								} catch (JSONException e) {
 									e.printStackTrace();
 								}
@@ -144,7 +167,11 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 							linkCode = obj.getString("link_code");
 							container.$context().runOnUiThread(new Runnable() {
 								public void run() {
-									OnLinkConnected();
+									try {
+										OnLinkConnected(obj.getString("link_code"), obj.getString("link_description"));
+									} catch(JSONException e) {
+										e.printStackTrace();
+									}
 								}
 							});
 						}
@@ -246,28 +273,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		OnImageRecieved(name, file.getPath());
 
 	}
-
-	
-	/**
-	 * Returns the Device ID as a string.
-	 *
-	 * @return deviceID as string.
-	 */
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for StreamLink")
-	public String DeviceID() {
-		return deviceID;
-	}
-
-	/**
-	 * Specifies the Device ID.
-	 *
-	 * @param id device id for StreamLink
-	 */
-	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "0000")
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
-	public void DeviceID(String id) {
-		deviceID = id;
-	}
 	
 	/**
 	 * Returns if StreamLink is set to use a custom server
@@ -353,9 +358,10 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * Creates a link with the password specified
 	 * 
 	 * @param password password to apply to the link
+	 * @param description description for the link
 	 */
 	@SimpleFunction
-	public void CreateLink(String password) {
+	public void CreateLink(String password, String description) {
 
 		if (!isConnected) {
 			InitSocketIO();
@@ -363,8 +369,10 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 		try {
 			JSONObject obj = new JSONObject();
-			obj.put("device_id", DeviceID());
+			obj.put("device_id", deviceID);
 			obj.put("link_password", password);
+			obj.put("link_description", description);
+			
 			socket.emit("createlink", obj.toString());
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -387,7 +395,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 		try {
 			JSONObject obj = new JSONObject();
-			obj.put("device_id", DeviceID());
+			obj.put("device_id", deviceID);
 			obj.put("link_code", linkCode);
 			obj.put("link_password", password);
 
@@ -617,18 +625,19 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * Runs after CreateLink is successful
 	 * 
 	 * @param linkCode
+	 * @param description
 	 */
 	@SimpleEvent
-	public void OnLinkCreated(String linkCode) {
-		EventDispatcher.dispatchEvent(this, "OnLinkCreated", linkCode);
+	public void OnLinkCreated(String linkCode, String description) {
+		EventDispatcher.dispatchEvent(this, "OnLinkCreated", linkCode, description);
 	}
 
 	/**
 	 * Runs after ConnectToLink is successful
 	 */
 	@SimpleEvent
-	public void OnLinkConnected() {
-		EventDispatcher.dispatchEvent(this, "OnLinkConnected");
+	public void OnLinkConnected(String linkCode, String description) {
+		EventDispatcher.dispatchEvent(this, "OnLinkConnected", linkCode, description);
 	}
 
 	/**
