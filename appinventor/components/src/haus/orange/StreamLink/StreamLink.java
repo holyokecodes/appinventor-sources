@@ -57,7 +57,7 @@ Link is a component designed to allow
 devices to communicate across networks.
 */
 
-@DesignerComponent(version = 1, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon.png")
+@DesignerComponent(version = 2, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon2.png")
 @SimpleObject(external = true)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, encoder.jar, rtmp.jar, rtplibrary.jar, rtsp.jar")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
@@ -143,7 +143,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 						container.$context().runOnUiThread(new Runnable() {
 							public void run() {
 								try {
-									OnLinkCreated(obj.getString("link_code"), obj.getString("link_description"));
+									OnLinkConnected(obj.getString("link_code"), obj.getString("link_description"));
 								} catch (JSONException e) {
 									e.printStackTrace();
 								}
@@ -194,7 +194,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 							final String message = obj.getString("message");
 							container.$context().runOnUiThread(new Runnable() {
 								public void run() {
-									OnTextMessageRecieved(name, message);
+									OnTextMessageReceived(name, message);
 								}
 							});
 						} else if (obj.getString("type").equals("image")) {
@@ -202,7 +202,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 							final String image = obj.getString("message");
 							container.$context().runOnUiThread(new Runnable() {
 								public void run() {
-									ProcessRecievedImage(name, image);
+									ProcessReceivedImage(name, image);
 								}
 							});
 						} else if (obj.getString("type").equals("math")) {
@@ -211,7 +211,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 							final long message = (long) obj.getDouble("message");
 							container.$context().runOnUiThread(new Runnable() {
 								public void run() {
-									OnMathMessageRecieved(name, message);
+									OnMathMessageReceived(name, message);
 								}
 							});
 
@@ -221,7 +221,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 							final boolean message = obj.getBoolean("message");
 							container.$context().runOnUiThread(new Runnable() {
 								public void run() {
-									OnLogicMessageRecieved(name, message);
+									OnLogicMessageReceived(name, message);
 								}
 							});
 
@@ -243,7 +243,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		socket.connect();
 	}
 
-	private void ProcessRecievedImage(String name, String base64Image) {
+	private void ProcessReceivedImage(String name, String base64Image) {
 		Date date = new Date();
 
 		byte[] byteImage = Base64.decode(base64Image);
@@ -270,7 +270,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 			e.printStackTrace();
 		}
 
-		OnImageRecieved(name, file.getPath());
+		OnImageReceived(name, file.getPath());
 
 	}
 	
@@ -627,17 +627,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 
 	/**
-	 * Runs after CreateLink is successful
-	 * 
-	 * @param linkCode
-	 * @param description
-	 */
-	@SimpleEvent
-	public void OnLinkCreated(String linkCode, String description) {
-		EventDispatcher.dispatchEvent(this, "OnLinkCreated", linkCode, description);
-	}
-
-	/**
 	 * Runs after ConnectToLink is successful
 	 */
 	@SimpleEvent
@@ -652,7 +641,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param message message that was sent
 	 */
 	@SimpleEvent
-	public void OnTextMessageRecieved(String name, String message) {
+	public void OnTextMessageReceived(String name, String message) {
 		EventDispatcher.dispatchEvent(this, "OnTextMessageRecieved", name, message);
 	}
 
@@ -663,7 +652,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param message message that was sent
 	 */
 	@SimpleEvent
-	public void OnMathMessageRecieved(String name, long message) {
+	public void OnMathMessageReceived(String name, long message) {
 		EventDispatcher.dispatchEvent(this, "OnMathMessageRecieved", name, message);
 	}
 
@@ -674,7 +663,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param message message that was sent
 	 */
 	@SimpleEvent
-	public void OnLogicMessageRecieved(String name, boolean message) {
+	public void OnLogicMessageReceived(String name, boolean message) {
 		EventDispatcher.dispatchEvent(this, "OnLogicMessageRecieved", name, message);
 	}
 
@@ -685,7 +674,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param image path to the image file
 	 */
 	@SimpleEvent
-	public void OnImageRecieved(String name, String image) {
+	public void OnImageReceived(String name, String image) {
 		EventDispatcher.dispatchEvent(this, "OnImageRecieved", name, image);
 	}
 }
