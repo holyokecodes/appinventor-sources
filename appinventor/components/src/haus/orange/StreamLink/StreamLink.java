@@ -57,7 +57,7 @@ Link is a component designed to allow
 devices to communicate across networks.
 */
 
-@DesignerComponent(version = 2, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon2.png")
+@DesignerComponent(version = 3, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon3.png")
 @SimpleObject(external = true)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, encoder.jar, rtmp.jar, rtplibrary.jar, rtsp.jar")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
@@ -642,7 +642,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 */
 	@SimpleEvent
 	public void OnTextMessageReceived(String name, String message) {
-		EventDispatcher.dispatchEvent(this, "OnTextMessageRecieved", name, message);
+		EventDispatcher.dispatchEvent(this, "OnTextMessageReceived", name, message);
 	}
 
 	/**
@@ -653,7 +653,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 */
 	@SimpleEvent
 	public void OnMathMessageReceived(String name, long message) {
-		EventDispatcher.dispatchEvent(this, "OnMathMessageRecieved", name, message);
+		EventDispatcher.dispatchEvent(this, "OnMathMessageReceived", name, message);
 	}
 
 	/**
@@ -664,7 +664,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 */
 	@SimpleEvent
 	public void OnLogicMessageReceived(String name, boolean message) {
-		EventDispatcher.dispatchEvent(this, "OnLogicMessageRecieved", name, message);
+		EventDispatcher.dispatchEvent(this, "OnLogicMessageReceived", name, message);
 	}
 
 	/**
@@ -675,6 +675,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 */
 	@SimpleEvent
 	public void OnImageReceived(String name, String image) {
-		EventDispatcher.dispatchEvent(this, "OnImageRecieved", name, image);
+		EventDispatcher.dispatchEvent(this, "OnImageReceived", name, image);
 	}
 }
