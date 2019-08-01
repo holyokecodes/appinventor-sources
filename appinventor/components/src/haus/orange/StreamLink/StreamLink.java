@@ -57,7 +57,7 @@ Link is a component designed to allow
 devices to communicate across networks.
 */
 
-@DesignerComponent(version = 3, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon3.png")
+@DesignerComponent(version = 4, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon4.png")
 @SimpleObject(external = true)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, encoder.jar, rtmp.jar, rtplibrary.jar, rtsp.jar")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
@@ -83,7 +83,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 		this.container = container;
 
-		serverIP = "http://streamlink.orange.haus:3000";
+		serverIP = "https://stream-link.herokuapp.com/";
 		customServerIP = "";
 		rtmpServerURL = "rtmp://a.rtmp.youtube.com/live2";
 		deviceID = getDeviceID();
