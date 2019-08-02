@@ -13,7 +13,6 @@ import java.util.UUID;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import com.firebase.tubesock.Base64;
 import com.google.appinventor.components.annotations.DesignerComponent;
 import com.google.appinventor.components.annotations.DesignerProperty;
 import com.google.appinventor.components.annotations.PropertyCategory;
@@ -41,6 +40,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Environment;
+import android.util.Base64;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewManager;
@@ -57,7 +57,7 @@ Link is a component designed to allow
 devices to communicate across networks.
 */
 
-@DesignerComponent(version = 4, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon4.png")
+@DesignerComponent(version = 5, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
 @SimpleObject(external = true)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, encoder.jar, rtmp.jar, rtplibrary.jar, rtsp.jar")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
@@ -246,7 +246,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	private void ProcessReceivedImage(String name, String base64Image) {
 		Date date = new Date();
 
-		byte[] byteImage = Base64.decode(base64Image);
+		byte[] byteImage = Base64.decode(base64Image, Base64.DEFAULT);
 
 		Bitmap bitmap = BitmapFactory.decodeByteArray(byteImage, 0, byteImage.length);
 
@@ -546,7 +546,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 				byte[] imageBytes = outputStream.toByteArray();
 
-				String image64 = Base64.encodeToString(imageBytes, false);
+				String image64 = Base64.encodeToString(imageBytes, Base64.DEFAULT);
 
 				JSONObject obj = new JSONObject();
 				obj.put("link_code", linkCode);
