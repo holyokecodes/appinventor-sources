@@ -185,7 +185,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 							final String message = obj.getString("message");
 							container.$context().runOnUiThread(new Runnable() {
 								public void run() {
-									OnTextMessageReceived(name, message);
+									OnMessageReceived(name, message);
 								}
 							});
 						} else if (obj.getString("type").equals("image")) {
@@ -196,26 +196,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 									ProcessReceivedImage(name, image);
 								}
 							});
-						} else if (obj.getString("type").equals("math")) {
-
-							final String name = obj.getString("name");
-							final long message = (long) obj.getDouble("message");
-							container.$context().runOnUiThread(new Runnable() {
-								public void run() {
-									OnMathMessageReceived(name, message);
-								}
-							});
-
-						} else if (obj.getString("type").equals("logic")) {
-
-							final String name = obj.getString("name");
-							final boolean message = obj.getBoolean("message");
-							container.$context().runOnUiThread(new Runnable() {
-								public void run() {
-									OnLogicMessageReceived(name, message);
-								}
-							});
-
 						}
 					}
 				} catch (JSONException e1) {
@@ -371,13 +351,13 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 
 	/**
-	 * Sends a TextMessage to the Link
+	 * Sends a Message to the Link
 	 * 
 	 * @param name    name of the message to identify it
 	 * @param message message to be sent
 	 */
 	@SimpleFunction
-	public void SendTextMessage(String name, String message) {
+	public void SendMessage(String name, String message) {
 		if (!isConnected) {
 			// Can't Run Yet
 		} else {
@@ -386,56 +366,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 				obj.put("link_code", linkCode);
 				obj.put("name", name);
 				obj.put("type", "string");
-				obj.put("message", message);
-
-				socket.emit("message", obj.toString());
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	/**
-	 * Sends a MathMessage to the Link
-	 * 
-	 * @param name    name of the message to identify it
-	 * @param message message to be sent
-	 */
-	@SimpleFunction
-	public void SendMathMessage(String name, long message) {
-		if (!isConnected) {
-			// Can't Run Yet
-		} else {
-			try {
-				JSONObject obj = new JSONObject();
-				obj.put("link_code", linkCode);
-				obj.put("name", name);
-				obj.put("type", "math");
-				obj.put("message", message);
-
-				socket.emit("message", obj.toString());
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	/**
-	 * Sends a LogicMessage to the Link
-	 * 
-	 * @param name    name of the message to identify it
-	 * @param message message to be sent
-	 */
-	@SimpleFunction
-	public void SendLogicMessage(String name, boolean message) {
-		if (!isConnected) {
-			// Can't Run Yet
-		} else {
-			try {
-				JSONObject obj = new JSONObject();
-				obj.put("link_code", linkCode);
-				obj.put("name", name);
-				obj.put("type", "logic");
 				obj.put("message", message);
 
 				socket.emit("message", obj.toString());
@@ -522,36 +452,14 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 
 	/**
-	 * Runs when a text based message is received
+	 * Runs when a message is received
 	 * 
 	 * @param name    identifier for message
 	 * @param message message that was sent
 	 */
 	@SimpleEvent
-	public void OnTextMessageReceived(String name, String message) {
-		EventDispatcher.dispatchEvent(this, "OnTextMessageReceived", name, message);
-	}
-
-	/**
-	 * Runs when a math based message is received
-	 * 
-	 * @param name    identifier for message
-	 * @param message message that was sent
-	 */
-	@SimpleEvent
-	public void OnMathMessageReceived(String name, long message) {
-		EventDispatcher.dispatchEvent(this, "OnMathMessageReceived", name, message);
-	}
-
-	/**
-	 * Runs when a logic based message is received
-	 * 
-	 * @param name    identifier for message
-	 * @param message message that was sent
-	 */
-	@SimpleEvent
-	public void OnLogicMessageReceived(String name, boolean message) {
-		EventDispatcher.dispatchEvent(this, "OnLogicMessageReceived", name, message);
+	public void OnMessageReceived(String name, String message) {
+		EventDispatcher.dispatchEvent(this, "OnMessageReceived", name, message);
 	}
 
 	/**
