@@ -37,15 +37,9 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Environment;
 import android.util.Base64;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewManager;
-import android.widget.Button;
-import android.widget.LinearLayout;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -57,9 +51,9 @@ Link is a component designed to allow
 devices to communicate across networks.
 */
 
-@DesignerComponent(version = 5, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
+@DesignerComponent(version = 6, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
 @SimpleObject(external = true)
-@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, encoder.jar, rtmp.jar, rtplibrary.jar, rtsp.jar")
+@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
@@ -69,8 +63,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	private static String deviceID;
 	public static String linkCode;
 	public static boolean useCustomServer;
-	public static String rtmpServerURL;
-	public static String streamKey;
 	
 	
 	
@@ -85,7 +77,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 		serverIP = "https://stream-link.herokuapp.com/";
 		customServerIP = "";
-		rtmpServerURL = "rtmp://a.rtmp.youtube.com/live2";
 		deviceID = getDeviceID();
 		linkCode = "0000";
 		isConnected = false;
@@ -316,48 +307,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	public void CustomServerIP(String ip) {
 		customServerIP = ip;
 	}
-	
-	/**
-	 * Returns the RTMP Server IP as a string.
-	 *
-	 * @return serverip as string.
-	 */
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for RTMP")
-	public String RTMPServerURL() {
-		return rtmpServerURL;
-	}
-
-	/**
-	 * Specifies the RTMP Server IP.
-	 *
-	 * @param
-	 */
-	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "rtmp://a.rtmp.youtube.com/live2")
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
-	public void RTMPServerURL(String url) {
-		rtmpServerURL = url;
-	}
-	
-	/**
-	 * Returns the RTMP Stream Key as a string.
-	 *
-	 * @return serverip as string.
-	 */
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for RTMP")
-	public String StreamKey() {
-		return streamKey;
-	}
-
-	/**
-	 * Specifies the RTMP Stream Key.
-	 *
-	 * @param
-	 */
-	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "")
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
-	public void StreamKey(String key) {
-		streamKey = key;
-	}
 
 	/**
 	 * Creates a link with the password specified
@@ -562,68 +511,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 				e.printStackTrace();
 			}
 		}
-	}
-
-	/**
-	 * Opens the custom window to Control RTMP Streaming
-	 */
-	@SimpleFunction
-	public void OpenStreamWindow() {
-		
-		
-		LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-		final LinearLayout layout = new LinearLayout(this.container.$context());
-		layout.setBackgroundColor(Color.WHITE);
-		layout.setOrientation(LinearLayout.VERTICAL);
-		
-		
-		final StreamLinkCamera camera = new StreamLinkCamera(this.container.$context(), rtmpServerURL, streamKey);
-		camera.setZOrderOnTop(false);
-		
-		final Button startStopStreamButton = new Button(this.container.$context());
-		startStopStreamButton.setText("Start Stream");
-		startStopStreamButton.setOnClickListener( new OnClickListener() {
-
-			@Override
-			public void onClick(View arg0) {
-				
-				
-				if(camera.isStreaming()) {
-					startStopStreamButton.setText("Start Stream");
-					camera.stopStreaming();
-				}else {
-					startStopStreamButton.setText("Stop Stream");
-					camera.startStreaming();
-				}
-				
-				
-				
-			}
-			
-		});
-		
-		Button closeButton = new Button(this.container.$context());
-		closeButton.setText("Close");
-		closeButton.setOnClickListener( new OnClickListener() {
-
-			@Override
-			public void onClick(View arg0) {
-				
-				camera.closeCamera();
-				((ViewManager)layout.getParent()).removeView(layout);
-				
-			}
-			
-		});
-		
-		layout.addView(closeButton, params);
-		layout.addView(startStopStreamButton, params);
-		layout.addView(camera, params);
-		
-		LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
-		
-		this.container.$context().addContentView(layout, layoutParams);
-		
 	}
 
 	/**
