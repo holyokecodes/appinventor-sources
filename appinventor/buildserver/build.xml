@@ -98,10 +98,6 @@
     <copy toFile="${classes.files.dir}/socketio.jar" file="${lib.dir}/socketio/socket.io-client-1.0.0.jar" />
   	<copy toFile="${classes.files.dir}/okhttp.jar" file="${lib.dir}/okhttp/okhttp-3.8.1.jar" />
   	<copy toFile="${classes.files.dir}/okio.jar" file="${lib.dir}/okio/okio-1.13.0.jar" />
-  	<copy toFile="${classes.files.dir}/encoder.jar" file="${lib.dir}/rtmpstreamer/encoder.jar" />
-  	<copy toFile="${classes.files.dir}/rtmp.jar" file="${lib.dir}/rtmpstreamer/rtmp.jar" />
-  	<copy toFile="${classes.files.dir}/rtplibrary.jar" file="${lib.dir}/rtmpstreamer/rtplibrary.jar" />
-  	<copy toFile="${classes.files.dir}/rtsp.jar" file="${lib.dir}/rtmpstreamer/rtsp.jar" />
     <copy toFile="${classes.files.dir}/firebase.jar" file="${lib.dir}/firebase/firebase-client-android-2.5.0.jar" />
     <copy toFile="${classes.files.dir}/google-api-client-beta.jar" file="${lib.dir}/oauth/google-api-client-1.10.3-beta.jar" />
     <copy toFile="${classes.files.dir}/google-http-client-beta.jar" file="${lib.dir}/oauth/google-http-client-1.10.3-beta.jar" />
