@@ -58,7 +58,7 @@ devices to communicate across networks.
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
 	public static Socket socket;
-	public static String serverIP;
+	public static String socketServerIP;
 	private static String deviceID;
 	public static String linkCode;
 	
@@ -73,7 +73,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 		this.container = container;
 
-		serverIP = "https://stream-link.herokuapp.com/";
+		socketServerIP = "https://stream-link.herokuapp.com/";
 		deviceID = getDeviceID();
 		linkCode = "0000";
 		isConnected = false;
@@ -101,7 +101,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 	private void InitSocketIO() {
 		try {
-			socket = IO.socket(serverIP);
+			socket = IO.socket(socketServerIP);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
@@ -124,7 +124,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 						container.$context().runOnUiThread(new Runnable() {
 							public void run() {
 								try {
-									OnLinkConnected(obj.getString("link_code"), obj.getString("link_description"));
+									OnSocketLinkConnected(obj.getString("link_code"), obj.getString("link_description"));
 								} catch (JSONException e) {
 									e.printStackTrace();
 								}
@@ -149,7 +149,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 							container.$context().runOnUiThread(new Runnable() {
 								public void run() {
 									try {
-										OnLinkConnected(obj.getString("link_code"), obj.getString("link_description"));
+										OnSocketLinkConnected(obj.getString("link_code"), obj.getString("link_description"));
 									} catch(JSONException e) {
 										e.printStackTrace();
 									}
@@ -175,7 +175,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 							final String message = obj.getString("message");
 							container.$context().runOnUiThread(new Runnable() {
 								public void run() {
-									OnMessageReceived(name, message);
+									OnSocketMessageReceived(name, message);
 								}
 							});
 						} else if (obj.getString("type").equals("image")) {
@@ -231,29 +231,29 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 			e.printStackTrace();
 		}
 
-		OnImageReceived(name, file.getPath());
+		OnSocketImageReceived(name, file.getPath());
 
 	}
 	
 	/**
-	 * Returns the servers IP address
+	 * Returns the socket servers IP address
 	 *
 	 * @return the server ip address as a string
 	 */
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for StreamLink")
-	public String ServerIP() {
-		return serverIP;
+	public String SocketServerIP() {
+		return socketServerIP;
 	}
 
 	/**
-	 * Sets the servers IP address
+	 * Sets the socket servers IP address
 	 *
 	 * @param
 	 */
 	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "https://stream-link.herokuapp.com/")
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
-	public void ServerIP(String ip) {
-		serverIP = ip;
+	public void SocketServerIP(String ip) {
+		socketServerIP = ip;
 	}
 
 	/**
@@ -263,7 +263,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param description description for the link
 	 */
 	@SimpleFunction
-	public void CreateLink(String password, String description) {
+	public void CreateSocketLink(String password, String description) {
 
 		if (!isConnected) {
 			InitSocketIO();
@@ -289,7 +289,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param password password for the specified Link
 	 */
 	@SimpleFunction
-	public void ConnectToLink(String linkCode, String password) {
+	public void ConnectToSocketLink(String linkCode, String password) {
 
 		if (!isConnected) {
 			InitSocketIO();
@@ -314,7 +314,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @return connection status
 	 */
 	@SimpleFunction
-	public boolean IsConnected() {
+	public boolean IsSocketConnected() {
 		return isConnected;
 	}
 
@@ -325,7 +325,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param message message to be sent
 	 */
 	@SimpleFunction
-	public void SendMessage(String name, String message) {
+	public void SendSocketMessage(String name, String message) {
 		if (!isConnected) {
 			// Can't Run Yet
 		} else {
@@ -350,7 +350,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param image path to image file
 	 */
 	@SimpleFunction
-	public void SendImage(String name, String image) {
+	public void SendSocketImage(String name, String image) {
 
 		// Only for rerunning function on permission granted
 		final String fName = name;
@@ -366,7 +366,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 						public void HandlePermissionResponse(String permission, boolean granted) {
 							if (granted) {
 								havePermission = true;
-								SendImage(fName, fImage);
+								SendSocketImage(fName, fImage);
 							} else {
 								form.dispatchPermissionDeniedEvent(form, "TakePicture", Manifest.permission.CAMERA);
 							}
@@ -415,8 +415,8 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * Runs after ConnectToLink is successful
 	 */
 	@SimpleEvent
-	public void OnLinkConnected(String linkCode, String description) {
-		EventDispatcher.dispatchEvent(this, "OnLinkConnected", linkCode, description);
+	public void OnSocketLinkConnected(String linkCode, String description) {
+		EventDispatcher.dispatchEvent(this, "OnSocketLinkConnected", linkCode, description);
 	}
 
 	/**
@@ -426,8 +426,8 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param message message that was sent
 	 */
 	@SimpleEvent
-	public void OnMessageReceived(String name, String message) {
-		EventDispatcher.dispatchEvent(this, "OnMessageReceived", name, message);
+	public void OnSocketMessageReceived(String name, String message) {
+		EventDispatcher.dispatchEvent(this, "OnSocketMessageReceived", name, message);
 	}
 
 	/**
@@ -437,7 +437,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	 * @param image path to the image file
 	 */
 	@SimpleEvent
-	public void OnImageReceived(String name, String image) {
-		EventDispatcher.dispatchEvent(this, "OnImageReceived", name, image);
+	public void OnSocketImageReceived(String name, String image) {
+		EventDispatcher.dispatchEvent(this, "OnSocketImageReceived", name, image);
 	}
 }
