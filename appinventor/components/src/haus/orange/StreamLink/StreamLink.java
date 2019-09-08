@@ -58,11 +58,9 @@ devices to communicate across networks.
 public class StreamLink extends AndroidNonvisibleComponent implements Component {
 
 	public static Socket socket;
-	public static String customServerIP;
 	public static String serverIP;
 	private static String deviceID;
 	public static String linkCode;
-	public static boolean useCustomServer;
 	
 	
 	
@@ -76,13 +74,10 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 		this.container = container;
 
 		serverIP = "https://stream-link.herokuapp.com/";
-		customServerIP = "";
 		deviceID = getDeviceID();
 		linkCode = "0000";
 		isConnected = false;
 		havePermission = false;
-		useCustomServer = false;
-
 	}
 	
 	private String getDeviceID() {
@@ -106,12 +101,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 	private void InitSocketIO() {
 		try {
-			
-			if(!useCustomServer) {
-				socket = IO.socket(serverIP);
-			}else {
-				socket = IO.socket(customServerIP);
-			}
+			socket = IO.socket(serverIP);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
@@ -246,46 +236,24 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 	
 	/**
-	 * Should StreamLink use a custom server?
-	 * 
-	 * @return true if a custom server should be used
-	 */
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Use a custom StreamLink Server")
-	public boolean UseCustomServer() {
-		return useCustomServer;
-	}
-	
-	/**
-	 * Should StreamLink use a customer server?
-	 * 
-	 * @param useCustom set to true if a custom server should be used
-	 */
-	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN, defaultValue = "false")
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
-	public void UseCustomServer(boolean useCustom) {
-		useCustomServer = useCustom;
-	}
-	
-	
-	/**
-	 * Returns the custom servers IP address
+	 * Returns the servers IP address
 	 *
 	 * @return the server ip address as a string
 	 */
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for StreamLink")
-	public String CustomServerIP() {
-		return customServerIP;
+	public String ServerIP() {
+		return serverIP;
 	}
 
 	/**
-	 * Sets the custom servers IP address
+	 * Sets the servers IP address
 	 *
 	 * @param
 	 */
-	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "")
+	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "https://stream-link.herokuapp.com/")
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
-	public void CustomServerIP(String ip) {
-		customServerIP = ip;
+	public void ServerIP(String ip) {
+		serverIP = ip;
 	}
 
 	/**
