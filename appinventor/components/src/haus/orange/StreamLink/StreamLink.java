@@ -12,6 +12,8 @@ import java.util.UUID;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.webrtc.IceCandidate;
+import org.webrtc.SessionDescription;
 
 import com.google.appinventor.components.annotations.DesignerComponent;
 import com.google.appinventor.components.annotations.DesignerProperty;
@@ -38,8 +40,12 @@ import android.content.SharedPreferences.Editor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.net.Uri;
 import android.os.Environment;
 import android.util.Base64;
+import haus.orange.StreamLink.webrtc.AppRTCClient;
+import haus.orange.StreamLink.webrtc.AppRTCClient.SignalingParameters;
+import haus.orange.StreamLink.webrtc.WebSocketRTCClient;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
@@ -53,17 +59,18 @@ devices to communicate across networks.
 
 @DesignerComponent(version = 6, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
 @SimpleObject(external = true)
-@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar")
+@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, autobahn.jar")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
-public class StreamLink extends AndroidNonvisibleComponent implements Component {
+public class StreamLink extends AndroidNonvisibleComponent implements Component, AppRTCClient.SignalingEvents {
 
 	public static Socket socket;
-	public static String socketServerIP;
+	public static String socketServerAddress;
+	public static String webRTCAddress;
 	private static String deviceID;
 	public static String linkCode;
 	
 	
-	
+	private AppRTCClient appRtcClient;
 	private ComponentContainer container;
 	private boolean isConnected;
 	private boolean havePermission;
@@ -73,7 +80,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 		this.container = container;
 
-		socketServerIP = "https://stream-link.herokuapp.com/";
+		socketServerAddress = "https://stream-link.herokuapp.com/";
 		deviceID = getDeviceID();
 		linkCode = "0000";
 		isConnected = false;
@@ -101,7 +108,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 
 	private void InitSocketIO() {
 		try {
-			socket = IO.socket(socketServerIP);
+			socket = IO.socket(socketServerAddress);
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 		}
@@ -236,24 +243,45 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	}
 	
 	/**
-	 * Returns the socket servers IP address
+	 * Returns the socket servers address
 	 *
 	 * @return the server ip address as a string
 	 */
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for StreamLink")
-	public String SocketServerIP() {
-		return socketServerIP;
+	public String SocketServerAddress() {
+		return socketServerAddress;
 	}
 
 	/**
-	 * Sets the socket servers IP address
+	 * Sets the socket servers address
 	 *
 	 * @param
 	 */
 	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "https://stream-link.herokuapp.com/")
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
-	public void SocketServerIP(String ip) {
-		socketServerIP = ip;
+	public void SocketServerAddress(String address) {
+		socketServerAddress = address;
+	}
+	
+	/**
+	 * Returns the WebRTC address
+	 *
+	 * @return the WebRTC address as a string
+	 */
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server Address for StreamLink")
+	public String WebRTCAddress() {
+		return webRTCAddress;
+	}
+
+	/**
+	 * Sets the WebRTC address
+	 *
+	 * @param
+	 */
+	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "https://appr.tc")
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
+	public void WebRTCAddress(String address) {
+		webRTCAddress = address;
 	}
 
 	/**
@@ -280,6 +308,15 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 			e.printStackTrace();
 		}
 
+	}
+	
+	public void CreateWebRTCLink(String linkCode) {
+		
+		Uri roomUri = Uri.parse(webRTCAddress);
+		
+		appRtcClient = new WebSocketRTCClient(this);
+		
+		
 	}
 
 	/**
@@ -439,5 +476,41 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component 
 	@SimpleEvent
 	public void OnSocketImageReceived(String name, String image) {
 		EventDispatcher.dispatchEvent(this, "OnSocketImageReceived", name, image);
+	}
+
+	@Override
+	public void onConnectedToRoom(SignalingParameters params) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onRemoteDescription(SessionDescription sdp) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onRemoteIceCandidate(IceCandidate candidate) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onRemoteIceCandidatesRemoved(IceCandidate[] candidates) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onChannelClose() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onChannelError(String description) {
+		// TODO Auto-generated method stub
+		
 	}
 }
