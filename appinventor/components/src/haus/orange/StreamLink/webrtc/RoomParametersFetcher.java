@@ -129,11 +129,9 @@ public class RoomParametersFetcher {
 			boolean isTurnPresent = false;
 			for (PeerConnection.IceServer server : iceServers) {
 				Log.d(TAG, "IceServer: " + server);
-				for (String uri : server.urls) {
-					if (uri.startsWith("turn:")) {
-						isTurnPresent = true;
-						break;
-					}
+				if (server.uri.startsWith("turn:")) {
+					isTurnPresent = true;
+					break;
 				}
 			}
 			// Request TURN servers.

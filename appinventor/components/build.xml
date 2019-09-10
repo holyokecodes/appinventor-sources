@@ -220,7 +220,7 @@
       	<pathelement location="${lib.dir}/socketio/socket.io-client-1.0.0.jar" />
       	<pathelement location="${lib.dir}/okio/okio-1.13.0.jar" />
       	<pathelement location="${lib.dir}/okhttp/okhttp-3.8.1.jar" />
-      	<pathelement location="${lib.dir}/autobahn/autbahn.jar" />
+      	<pathelement location="${lib.dir}/autobahn/autobahn.jar" />
         <pathelement location="${lib.dir}/firebase/firebase-client-android-2.5.0.jar" />
         <pathelement location="${lib.dir}/oauth/google-api-client-1.10.3-beta.jar" />
         <pathelement location="${lib.dir}/oauth/google-api-client-android2-1.10.3-beta.jar" />

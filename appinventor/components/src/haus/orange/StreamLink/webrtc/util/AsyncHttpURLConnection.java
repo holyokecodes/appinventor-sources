@@ -52,10 +52,10 @@ public class AsyncHttpURLConnection {
 	}
 
 	public void send() {
-		new Thread(this::sendHttpMessage).start();
+		new Thread(this.sendHttpMessage()).start();
 	}
 
-	private void sendHttpMessage() {
+	private Runnable sendHttpMessage() {
 		try {
 			HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
 			byte[] postData = new byte[0];
@@ -95,7 +95,7 @@ public class AsyncHttpURLConnection {
 				events.onHttpError(
 						"Non-200 response to " + method + " to URL: " + url + " : " + connection.getHeaderField(null));
 				connection.disconnect();
-				return;
+				return null;
 			}
 			InputStream responseStream = connection.getInputStream();
 			String response = drainStream(responseStream);
@@ -107,6 +107,7 @@ public class AsyncHttpURLConnection {
 		} catch (IOException e) {
 			events.onHttpError("HTTP " + method + " to " + url + " error: " + e.getMessage());
 		}
+		return null;
 	}
 
 	// Return the contents of an InputStream as a String.
