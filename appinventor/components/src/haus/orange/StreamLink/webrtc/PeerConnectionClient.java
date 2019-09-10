@@ -413,13 +413,19 @@ public class PeerConnectionClient {
 		}
 		Log.d(TAG, "Preferred video codec: " + preferredVideoCodec);
 
+		
+		/* Initialize WebRTC globally */
+		PeerConnectionFactory.initializeAndroidGlobals(context, false);
+		/* Setup factory options */
+		PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
 		// Initialize WebRTC
-		Log.d(TAG, "Initialize WebRTC. Field trials: " + fieldTrials + " Enable video HW acceleration: "
-				+ peerConnectionParameters.videoCodecHwAcceleration);
-		PeerConnectionFactory
+		//Log.d(TAG, "Initialize WebRTC. Field trials: " + fieldTrials + " Enable video HW acceleration: "
+		//		+ peerConnectionParameters.videoCodecHwAcceleration);
+		/*PeerConnectionFactory
 				.initialize(PeerConnectionFactory.InitializationOptions.builder(context).setFieldTrials(fieldTrials)
 						.setEnableVideoHwAcceleration(peerConnectionParameters.videoCodecHwAcceleration)
 						.setEnableInternalTracer(true).createInitializationOptions());
+		*/
 		if (peerConnectionParameters.tracing) {
 			PeerConnectionFactory.startInternalTracingCapture(
 					Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "webrtc-trace.txt");
@@ -525,7 +531,9 @@ public class PeerConnectionClient {
 //			decoderFactory = new SoftwareVideoDecoderFactory();
 //		}
 
-		factory = new PeerConnectionFactory(options, encoderFactory, decoderFactory);
+		//factory = new PeerConnectionFactory(options, encoderFactory, decoderFactory);
+		factory = new PeerConnectionFactory(options);
+		
 		Log.d(TAG, "Peer connection factory created.");
 	}
 
@@ -605,9 +613,9 @@ public class PeerConnectionClient {
 		// Use ECDSA encryption.
 		rtcConfig.keyType = PeerConnection.KeyType.ECDSA;
 		// Enable DTLS for normal calls and disable for loopback calls.
-		rtcConfig.enableDtlsSrtp = !peerConnectionParameters.loopback;
+		//rtcConfig.enableDtlsSrtp = !peerConnectionParameters.loopback;
 
-		peerConnection = factory.createPeerConnection(rtcConfig, pcObserver);
+		peerConnection = factory.createPeerConnection(rtcConfig, sdpMediaConstraints, pcObserver);
 
 		if (dataChannelEnabled) {
 			DataChannel.Init init = new DataChannel.Init();
