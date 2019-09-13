@@ -3,6 +3,10 @@ package haus.orange.StreamLink;
 
 import java.util.UUID;
 
+import org.webrtc.IceCandidate;
+import org.webrtc.SessionDescription;
+import org.webrtc.StatsReport;
+
 import com.google.appinventor.components.annotations.DesignerComponent;
 import com.google.appinventor.components.annotations.DesignerProperty;
 import com.google.appinventor.components.annotations.PropertyCategory;
@@ -22,8 +26,13 @@ import com.google.appinventor.components.runtime.EventDispatcher;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.net.Uri;
 import haus.orange.StreamLink.socketio.SocketIOClient;
 import haus.orange.StreamLink.socketio.SocketIOEvents;
+import haus.orange.StreamLink.webrtc.AppRTCClient;
+import haus.orange.StreamLink.webrtc.AppRTCClient.SignalingParameters;
+import haus.orange.StreamLink.webrtc.PeerConnectionClient;
+import haus.orange.StreamLink.webrtc.WebSocketRTCClient;
 
 /*
 Jacob Bashista 5/27/19
@@ -36,7 +45,8 @@ devices to communicate across networks.
 @SimpleObject(external = true)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, autobahn.jar")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
-public class StreamLink extends AndroidNonvisibleComponent implements Component, SocketIOEvents {
+public class StreamLink extends AndroidNonvisibleComponent implements Component, SocketIOEvents, AppRTCClient.SignalingEvents,
+PeerConnectionClient.PeerConnectionEvents {
 
 	public String socketServerAddress;
 	public String webRTCAddress;
@@ -46,6 +56,12 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component,
 	private SocketIOClient socketClient;
 	
 	private ComponentContainer container;
+	
+	private PeerConnectionClient peerConnectionClient = null;
+    private AppRTCClient appRtcClient;
+	private AppRTCClient.SignalingParameters signalingParameters;
+	private boolean iceConnected;
+	private AppRTCClient.RoomConnectionParameters roomConnectionParameters;
 
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
@@ -57,7 +73,30 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component,
 		linkCode = "0000";
 		
 		socketClient = new SocketIOClient(container, this, socketServerAddress);
-			
+		
+		
+		iceConnected = false;
+        signalingParameters = null;
+		
+		
+        peerConnectionClient = new PeerConnectionClient();
+	}
+	
+	
+	public void connectVideoCall(String roomID) {
+		Uri roomUri = Uri.parse("https://appr.tc");
+		
+		appRtcClient = new WebSocketRTCClient(this);
+		
+		roomConnectionParameters =
+                new AppRTCClient.RoomConnectionParameters(
+                        roomUri.toString(),
+                        roomID,
+                        false,
+                        null);
+		
+		appRtcClient.connectToRoom(roomConnectionParameters);
+		
 	}
 	
 	private String getDeviceID() {
@@ -119,6 +158,11 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component,
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
 	public void WebRTCAddress(String address) {
 		webRTCAddress = address;
+	}
+	
+	@SimpleFunction
+	public void CreateVideoCall(String roomID) {
+		connectVideoCall("657619640");
 	}
 
 	/**
@@ -225,5 +269,103 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component,
 	@Override
 	public void ImageReceived(String name, String image) {
 		OnImageReceived(name, image);
+	}
+
+
+	@Override
+	public void onLocalDescription(SessionDescription sdp) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onIceCandidate(IceCandidate candidate) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onIceCandidatesRemoved(IceCandidate[] candidates) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onIceConnected() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onIceDisconnected() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onPeerConnectionClosed() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onPeerConnectionStatsReady(StatsReport[] reports) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onPeerConnectionError(String description) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onConnectedToRoom(SignalingParameters params) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onRemoteDescription(SessionDescription sdp) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onRemoteIceCandidate(IceCandidate candidate) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onRemoteIceCandidatesRemoved(IceCandidate[] candidates) {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onChannelClose() {
+		// TODO Auto-generated method stub
+		
+	}
+
+
+	@Override
+	public void onChannelError(String description) {
+		// TODO Auto-generated method stub
+		
 	}
 }
