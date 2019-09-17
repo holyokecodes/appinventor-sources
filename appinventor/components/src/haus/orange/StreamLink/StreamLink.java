@@ -28,6 +28,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.net.Uri;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import haus.orange.StreamLink.socketio.SocketIOClient;
 import haus.orange.StreamLink.socketio.SocketIOEvents;
 import haus.orange.StreamLink.webrtc.AppRTCClient;
@@ -107,20 +109,21 @@ PeerConnectionClient.PeerConnectionEvents {
 	 */
 	@SimpleFunction
 	public void getPositionTest(Canvas canvas) {
+
+		LinearLayout linearLayout = new LinearLayout(this.container.$context());
+		linearLayout.setLayoutParams(canvas.getView().getLayoutParams());
+
+		linearLayout.setBackgroundColor(COLOR_ORANGE);
+		linearLayout.setOrientation(LinearLayout.VERTICAL);
+
+		ViewGroup parent = (ViewGroup)canvas.getView().getParent();
 		
-		int[] location = new int[2];
+		if(parent != null) {
+			parent.addView(linearLayout);
+			
+			parent.removeView(canvas.getView());
+		}
 		
-		canvas.getView().getLocationOnScreen(location);
-		int width = canvas.getView().getWidth();
-		int height = canvas.getView().getHeight();
-		
-		System.out.println("Location: ");
-		System.out.print(location[0]);
-		System.out.println(location[1]);
-		
-		// These seem to be double what is specified in App Inventor
-		System.out.println(width);
-		System.out.println(height);
 	}
 	
 	private String getDeviceID() {
