@@ -19,6 +19,7 @@ import com.google.appinventor.components.annotations.UsesPermissions;
 import com.google.appinventor.components.common.ComponentCategory;
 import com.google.appinventor.components.common.PropertyTypeConstants;
 import com.google.appinventor.components.runtime.AndroidNonvisibleComponent;
+import com.google.appinventor.components.runtime.Canvas;
 import com.google.appinventor.components.runtime.Component;
 import com.google.appinventor.components.runtime.ComponentContainer;
 import com.google.appinventor.components.runtime.EventDispatcher;
@@ -97,6 +98,29 @@ PeerConnectionClient.PeerConnectionEvents {
 		
 		appRtcClient.connectToRoom(roomConnectionParameters);
 		
+	}
+	
+	/**
+	 * Tests getting a canvas position from App Inventor
+	 * 
+	 * @param canvas the canvas to grab the position data from
+	 */
+	@SimpleFunction
+	public void getPositionTest(Canvas canvas) {
+		
+		int[] location = new int[2];
+		
+		canvas.getView().getLocationOnScreen(location);
+		int width = canvas.getView().getWidth();
+		int height = canvas.getView().getHeight();
+		
+		System.out.println("Location: ");
+		System.out.print(location[0]);
+		System.out.println(location[1]);
+		
+		// These seem to be double what is specified in App Inventor
+		System.out.println(width);
+		System.out.println(height);
 	}
 	
 	private String getDeviceID() {
