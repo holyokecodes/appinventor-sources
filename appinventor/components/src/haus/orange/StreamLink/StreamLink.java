@@ -1,12 +1,22 @@
 package haus.orange.StreamLink;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
+import org.webrtc.Camera2Enumerator;
+import org.webrtc.CameraEnumerator;
 import org.webrtc.IceCandidate;
+import org.webrtc.RendererCommon.ScalingType;
 import org.webrtc.SessionDescription;
 import org.webrtc.StatsReport;
-
+import org.webrtc.SurfaceViewRenderer;
+import org.webrtc.VideoCapturer;
+import org.webrtc.VideoFrame;
+import org.webrtc.VideoRenderer;
+import org.webrtc.VideoSink;
+ 
 import com.google.appinventor.components.annotations.DesignerComponent;
 import com.google.appinventor.components.annotations.DesignerProperty;
 import com.google.appinventor.components.annotations.PropertyCategory;
@@ -24,12 +34,15 @@ import com.google.appinventor.components.runtime.Component;
 import com.google.appinventor.components.runtime.ComponentContainer;
 import com.google.appinventor.components.runtime.EventDispatcher;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.net.Uri;
+import android.support.annotation.UiThread;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
+import android.widget.Toast;
 import haus.orange.StreamLink.socketio.SocketIOClient;
 import haus.orange.StreamLink.socketio.SocketIOEvents;
 import haus.orange.StreamLink.webrtc.AppRTCClient;
@@ -60,11 +73,22 @@ PeerConnectionClient.PeerConnectionEvents {
 	
 	private ComponentContainer container;
 	
+	private SurfaceViewRenderer videoView;
+	
+	private static final int STAT_CALLBACK_PERIOD = 1000;
 	private PeerConnectionClient peerConnectionClient = null;
     private AppRTCClient appRtcClient;
 	private AppRTCClient.SignalingParameters signalingParameters;
 	private boolean iceConnected;
 	private AppRTCClient.RoomConnectionParameters roomConnectionParameters;
+	private final List<VideoRenderer.Callbacks> remoteRenderers = new ArrayList<>();
+	private final ProxyRenderer remoteProxyRenderer = new ProxyRenderer();
+	private PeerConnectionClient.PeerConnectionParameters peerConnectionParameters;
+	private long callStartedTimeMs = 0;
+	private boolean isError;
+	private final ProxyVideoSink localProxyVideoSink = new ProxyVideoSink();
+	private boolean activityRunning;
+	private Toast logToast;
 
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
@@ -76,50 +100,135 @@ PeerConnectionClient.PeerConnectionEvents {
 		linkCode = "0000";
 		
 		socketClient = new SocketIOClient(container, this, socketServerAddress);
-		
+	}
+	
+	
+	private void initWebRTC(String roomID, Canvas canvas) {
 		
 		iceConnected = false;
         signalingParameters = null;
 		
+		videoView = new SurfaceViewRenderer(this.container.$context());
 		
-        peerConnectionClient = new PeerConnectionClient();
+		replaceViewWithCamera(canvas, videoView);
+		
+		
+		remoteRenderers.add(remoteProxyRenderer);
+		
+		peerConnectionClient = new PeerConnectionClient();
+		
+		videoView.init(peerConnectionClient.getRenderContext(), null);
+		videoView.setScalingType(ScalingType.SCALE_ASPECT_FILL);
+		
+		videoView.setEnableHardwareScaler(true);
+		
+		
+		connectVideoCall(roomID);
 	}
 	
-	
-	public void connectVideoCall(String roomID) {
+	private void connectVideoCall(String roomID) {
 		Uri roomUri = Uri.parse("https://appr.tc");
 		
-		appRtcClient = new WebSocketRTCClient(this);
-		
-		roomConnectionParameters =
+		int videoWidth = 0;
+        int videoHeight = 0;
+        
+        peerConnectionParameters =
+                new PeerConnectionClient.PeerConnectionParameters(true,
+                        false,
+                        false,
+                        videoWidth,
+                        videoHeight,
+                        0,
+                        1700,
+                        "VP8",
+                        true,
+                        false,
+                        32,
+                        "OPUS",
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        false,
+                        null);
+        
+        
+        appRtcClient = new WebSocketRTCClient(this);
+        roomConnectionParameters =
                 new AppRTCClient.RoomConnectionParameters(
                         roomUri.toString(),
                         roomID,
                         false,
                         null);
-		
-		appRtcClient.connectToRoom(roomConnectionParameters);
-		
+        
+        peerConnectionClient.createPeerConnectionFactory(
+                this.container.$context(), peerConnectionParameters, this);
+        
+        startCall();   
 	}
 	
-	/**
-	 * Tests getting a canvas position from App Inventor
-	 * 
-	 * @param canvas the canvas to grab the position data from
-	 */
-	@SimpleFunction
-	public void getPositionTest(Canvas canvas) {
+	private void startCall() {
+        if (appRtcClient == null) {
+            System.out.println("AppRTC client is not allocated for a call.");
+            return;
+        }
+        callStartedTimeMs = System.currentTimeMillis();
 
-		LinearLayout linearLayout = new LinearLayout(this.container.$context());
-		linearLayout.setLayoutParams(canvas.getView().getLayoutParams());
+        // Start room connection.
+        logAndToast("Connecting To: " + roomConnectionParameters.roomUrl);
+        appRtcClient.connectToRoom(roomConnectionParameters);
+    }
+	
+	@UiThread
+    private void callConnected() {
+        final long delta = System.currentTimeMillis() - callStartedTimeMs;
+        System.out.println("Call connected: delay=" + delta + "ms");
+        if (peerConnectionClient == null || isError) {
+            System.out.println("Call is connected in closed or error state");
+            return;
+        }
+        // Enable statistics callback.
+        peerConnectionClient.enableStatsEvents(true, STAT_CALLBACK_PERIOD);
+        
+        remoteProxyRenderer.setTarget(videoView);
+    }
+	
+	private void disconnect() {
+        activityRunning = false;
+        remoteProxyRenderer.setTarget(null);
+        localProxyVideoSink.setTarget(null);
+        if (appRtcClient != null) {
+            appRtcClient.disconnectFromRoom();
+            appRtcClient = null;
+        }
+        if (videoView != null) {
+        	videoView.release();
+        	videoView = null;
+        }
+        if (peerConnectionClient != null) {
+            peerConnectionClient.close();
+            peerConnectionClient = null;
+        }
+        if (iceConnected && !isError) {
+            //setResult("OK");
+        } else {
+            //setResult(RESULT_CANCELED);
+        }
+        //finish();
+    }
 
-		linearLayout.setBackgroundColor(COLOR_ORANGE);
-		linearLayout.setOrientation(LinearLayout.VERTICAL);
+	
+	private void replaceViewWithCamera(Canvas canvas, SurfaceViewRenderer video) {
+		
+		video.setLayoutParams(canvas.getView().getLayoutParams());
 
 		ViewGroup parent = (ViewGroup)canvas.getView().getParent();
 		
 		if(parent != null) {
-			parent.addView(linearLayout);
+			parent.addView(video);
 			
 			parent.removeView(canvas.getView());
 		}
@@ -188,8 +297,8 @@ PeerConnectionClient.PeerConnectionEvents {
 	}
 	
 	@SimpleFunction
-	public void CreateVideoCall(String roomID) {
-		connectVideoCall("657619640");
+	public void CreateVideoCall(String roomID, Canvas canvas) {
+		initWebRTC("657619640", canvas);
 	}
 
 	/**
@@ -301,98 +410,343 @@ PeerConnectionClient.PeerConnectionEvents {
 
 	@Override
 	public void onLocalDescription(SessionDescription sdp) {
-		// TODO Auto-generated method stub
 		
+		final SessionDescription sdp1 = sdp;
+		final long delta = System.currentTimeMillis() - callStartedTimeMs;
+        this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (appRtcClient != null) {
+                    logAndToast("Sending " + sdp1.type + ", delay=" + delta + "ms");
+                    if (signalingParameters.initiator) {
+                        appRtcClient.sendOfferSdp(sdp1);
+                    } else {
+                        appRtcClient.sendAnswerSdp(sdp1);
+                    }
+                }
+                if (peerConnectionParameters.videoMaxBitrate > 0) {
+                    System.out.println("Set video maximum bitrate: " + peerConnectionParameters.videoMaxBitrate);
+                    peerConnectionClient.setVideoMaxBitrate(peerConnectionParameters.videoMaxBitrate);
+                }
+            }
+        });
 	}
 
 
 	@Override
 	public void onIceCandidate(IceCandidate candidate) {
-		// TODO Auto-generated method stub
-		
+		final IceCandidate candidate1 = candidate;
+		this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (appRtcClient != null) {
+                    appRtcClient.sendLocalIceCandidate(candidate1);
+                }
+            }
+        });
 	}
 
 
 	@Override
 	public void onIceCandidatesRemoved(IceCandidate[] candidates) {
-		// TODO Auto-generated method stub
-		
+		final IceCandidate[] candidates1 = candidates;
+		this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (appRtcClient != null) {
+                    appRtcClient.sendLocalIceCandidateRemovals(candidates1);
+                }
+            }
+        });
 	}
 
 
 	@Override
 	public void onIceConnected() {
-		// TODO Auto-generated method stub
-		
+		final long delta = System.currentTimeMillis() - callStartedTimeMs;
+        this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                logAndToast("ICE connected, delay=" + delta + "ms");
+                iceConnected = true;
+                callConnected();
+            }
+        });
 	}
 
 
 	@Override
 	public void onIceDisconnected() {
-		// TODO Auto-generated method stub
-		
+		this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                logAndToast("ICE disconnected");
+                iceConnected = false;
+                disconnect();
+            }
+        });
 	}
 
 
 	@Override
 	public void onPeerConnectionClosed() {
-		// TODO Auto-generated method stub
-		
+		// DO NOTHING
 	}
 
 
 	@Override
 	public void onPeerConnectionStatsReady(StatsReport[] reports) {
-		// TODO Auto-generated method stub
-		
+		// DO NOTHING
 	}
 
 
 	@Override
 	public void onPeerConnectionError(String description) {
-		// TODO Auto-generated method stub
-		
+		// DO NOTHING
 	}
+	
+	private VideoCapturer createVideoCapturer() {
+        final VideoCapturer videoCapturer;
+        System.out.println("Creating capturer using camera2 API.");
+        videoCapturer = createCameraCapturer(new Camera2Enumerator(this.container.$context()));
+        if (videoCapturer == null) {
+            reportError("Failed to open camera");
+            return null;
+        }
+        return videoCapturer;
+    }
+	
+	private VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
+        final String[] deviceNames = enumerator.getDeviceNames();
 
+        // First, try to find front facing camera
+        System.out.println("Looking for front facing cameras.");
+        for (String deviceName : deviceNames) {
+            if (enumerator.isFrontFacing(deviceName)) {
+                System.out.println("Creating front facing camera capturer.");
+                VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
+
+                if (videoCapturer != null) {
+                    return videoCapturer;
+                }
+            }
+        }
+
+        // Front facing camera not found, try something else
+        System.out.println("Looking for other cameras.");
+        for (String deviceName : deviceNames) {
+            if (!enumerator.isFrontFacing(deviceName)) {
+                System.out.println("Creating other camera capturer.");
+                VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
+
+                if (videoCapturer != null) {
+                    return videoCapturer;
+                }
+            }
+        }
+
+        return null;
+    }
+
+	private void onConnectedToRoomInternal(final AppRTCClient.SignalingParameters params) {
+        final long delta = System.currentTimeMillis() - callStartedTimeMs;
+
+        signalingParameters = params;
+        logAndToast("Creating peer connection, delay=" + delta + "ms");
+        VideoCapturer videoCapturer = null;
+        if (peerConnectionParameters.videoCallEnabled) {
+            videoCapturer = createVideoCapturer();
+        }
+        peerConnectionClient.createPeerConnection(
+                localProxyVideoSink, remoteRenderers, videoCapturer, signalingParameters);
+
+        if (signalingParameters.initiator) {
+            logAndToast("Creating OFFER...");
+            // Create offer. Offer SDP will be sent to answering client in
+            // PeerConnectionEvents.onLocalDescription event.
+            peerConnectionClient.createOffer();
+        } else {
+            if (params.offerSdp != null) {
+                peerConnectionClient.setRemoteDescription(params.offerSdp);
+                logAndToast("Creating ANSWER...");
+                // Create answer. Answer SDP will be sent to offering client in
+                // PeerConnectionEvents.onLocalDescription event.
+                peerConnectionClient.createAnswer();
+            }
+            if (params.iceCandidates != null) {
+                // Add remote ICE candidates from room.
+                for (IceCandidate iceCandidate : params.iceCandidates) {
+                    peerConnectionClient.addRemoteIceCandidate(iceCandidate);
+                }
+            }
+        }
+    }
 
 	@Override
 	public void onConnectedToRoom(SignalingParameters params) {
-		// TODO Auto-generated method stub
-		
+		final SignalingParameters params1 = params;
+		this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                onConnectedToRoomInternal(params1);
+            }
+        });
 	}
 
 
 	@Override
 	public void onRemoteDescription(SessionDescription sdp) {
-		// TODO Auto-generated method stub
+		final SessionDescription sdp1 = sdp;
+		final long delta = System.currentTimeMillis() - callStartedTimeMs;
+        this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (peerConnectionClient == null) {
+                    System.out.println("Received remote SDP for non-initilized peer connection.");
+                    return;
+                }
+                logAndToast("Received remote " + sdp1.type + ", delay=" + delta + "ms");
+                peerConnectionClient.setRemoteDescription(sdp1);
+                if (!signalingParameters.initiator) {
+                    logAndToast("Creating ANSWER...");
+                    // Create answer. Answer SDP will be sent to offering client in
+                    // PeerConnectionEvents.onLocalDescription event.
+                    peerConnectionClient.createAnswer();
+                }
+            }
+        });
 		
 	}
 
 
 	@Override
 	public void onRemoteIceCandidate(IceCandidate candidate) {
-		// TODO Auto-generated method stub
-		
+		final IceCandidate candidate1 = candidate;
+		this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (peerConnectionClient == null) {
+                    System.out.println("Received ICE candidate for a non-initialized peer connection.");
+                    return;
+                }
+                peerConnectionClient.addRemoteIceCandidate(candidate1);
+            }
+        });	
 	}
 
 
 	@Override
 	public void onRemoteIceCandidatesRemoved(IceCandidate[] candidates) {
-		// TODO Auto-generated method stub
 		
+		final IceCandidate[] candidates1 = candidates;
+		
+		this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (peerConnectionClient == null) {
+                    System.out.println("Received ICE candidate removals for a non-initialized peer connection.");
+                    return;
+                }
+                peerConnectionClient.removeRemoteIceCandidates(candidates1);
+            }
+        });
 	}
 
 
 	@Override
 	public void onChannelClose() {
-		// TODO Auto-generated method stub
-		
+		this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                logAndToast("Remote end hung up; dropping PeerConnection");
+                disconnect();
+            }
+        });
 	}
 
 
 	@Override
 	public void onChannelError(String description) {
-		// TODO Auto-generated method stub
-		
+		// DO NOTHING
 	}
+	
+	private static class ProxyRenderer implements VideoRenderer.Callbacks {
+        private VideoRenderer.Callbacks target;
+
+        @Override
+        synchronized public void renderFrame(VideoRenderer.I420Frame frame) {
+            if (target == null) {
+                System.out.println("Dropping frame in proxy because target is null.");
+                VideoRenderer.renderFrameDone(frame);
+                return;
+            }
+
+            target.renderFrame(frame);
+        }
+
+        synchronized public void setTarget(VideoRenderer.Callbacks target) {
+            this.target = target;
+        }
+    }
+
+    private static class ProxyVideoSink implements VideoSink {
+        private VideoSink target;
+
+        @Override
+        synchronized public void onFrame(VideoFrame frame) {
+            if (target == null) {
+                System.out.println("Dropping frame in proxy because target is null.");
+                return;
+            }
+
+            target.onFrame(frame);
+        }
+
+        synchronized public void setTarget(VideoSink target) {
+            this.target = target;
+        }
+    }
+    
+    private void disconnectWithErrorMessage(final String errorMessage) {
+        if (!activityRunning) {
+            System.out.println("Critical error: " + errorMessage);
+            disconnect();
+        } else {
+            new AlertDialog.Builder(this.container.$context())
+                    .setTitle("Error")
+                    .setMessage(errorMessage)
+                    .setCancelable(false)
+                    .setNeutralButton("OK",
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int id) {
+                                    dialog.cancel();
+                                    disconnect();
+                                }
+                            })
+                    .create()
+                    .show();
+        }
+    }
+    
+    private void logAndToast(String msg) {
+        System.out.println(msg);
+        if (logToast != null) {
+            logToast.cancel();
+        }
+        logToast = Toast.makeText(this.container.$context(), msg, Toast.LENGTH_SHORT);
+        logToast.show();
+    }
+
+    private void reportError(final String description) {
+        this.container.$context().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (!isError) {
+                    isError = true;
+                    disconnectWithErrorMessage(description);
+                }
+            }
+        });
+    }
 }
