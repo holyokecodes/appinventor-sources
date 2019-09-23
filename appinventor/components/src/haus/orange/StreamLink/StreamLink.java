@@ -108,7 +108,9 @@ PeerConnectionClient.PeerConnectionEvents {
 		iceConnected = false;
         signalingParameters = null;
 		
-		videoView = new SurfaceViewRenderer(this.container.$context());
+        if(videoView == null) {
+        	videoView = new SurfaceViewRenderer(this.container.$context());
+        }
 		
 		replaceViewWithCamera(canvas, videoView);
 		
@@ -298,7 +300,19 @@ PeerConnectionClient.PeerConnectionEvents {
 	
 	@SimpleFunction
 	public void CreateVideoCall(String roomID, Canvas canvas) {
-		initWebRTC("657619640", canvas);
+		initWebRTC(roomID, canvas);
+	}
+	
+	@SimpleFunction
+	public void DisconnectVideoCall() {
+		disconnect();
+	}
+	
+	@SimpleFunction
+	public void SwitchCamera() {
+		if (peerConnectionClient != null) {
+            peerConnectionClient.switchCamera();
+        }
 	}
 
 	/**
