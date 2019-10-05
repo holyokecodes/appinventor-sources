@@ -230,11 +230,11 @@ PeerConnectionClient.PeerConnectionEvents {
 		ViewGroup parent = (ViewGroup)canvas.getView().getParent();
 		
 		if(parent != null) {
+			parent.removeView(video);
 			parent.addView(video);
 			
 			parent.removeView(canvas.getView());
 		}
-		
 	}
 	
 	private String getDeviceID() {
