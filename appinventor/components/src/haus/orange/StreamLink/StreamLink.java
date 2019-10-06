@@ -90,6 +90,9 @@ PeerConnectionClient.PeerConnectionEvents {
 	private boolean activityRunning;
 	private Toast logToast;
 
+	private ViewGroup parent;
+	private Canvas canvas;
+	
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
 
@@ -103,7 +106,7 @@ PeerConnectionClient.PeerConnectionEvents {
 	}
 	
 	
-	private void initWebRTC(String roomID, Canvas canvas) {
+	private void initWebRTC(String roomID, Canvas canvas, boolean sendVideo) {
 		
 		iceConnected = false;
         signalingParameters = null;
@@ -124,18 +127,18 @@ PeerConnectionClient.PeerConnectionEvents {
 		
 		videoView.setEnableHardwareScaler(true);
 		
-		
-		connectVideoCall(roomID);
+		connectVideoCall(roomID, sendVideo);
 	}
 	
-	private void connectVideoCall(String roomID) {
+	// If you want to send video
+	private void connectVideoCall(String roomID, boolean sendVideo) {
 		Uri roomUri = Uri.parse("https://appr.tc");
 		
 		int videoWidth = 0;
         int videoHeight = 0;
         
         peerConnectionParameters =
-                new PeerConnectionClient.PeerConnectionParameters(true,
+                new PeerConnectionClient.PeerConnectionParameters(sendVideo,
                         false,
                         false,
                         videoWidth,
@@ -155,8 +158,7 @@ PeerConnectionClient.PeerConnectionEvents {
                         false,
                         false,
                         false,
-                        null);
-        
+                        null);      
         
         appRtcClient = new WebSocketRTCClient(this);
         roomConnectionParameters =
@@ -171,7 +173,7 @@ PeerConnectionClient.PeerConnectionEvents {
         
         startCall();   
 	}
-	
+
 	private void startCall() {
         if (appRtcClient == null) {
             System.out.println("AppRTC client is not allocated for a call.");
@@ -207,6 +209,8 @@ PeerConnectionClient.PeerConnectionEvents {
             appRtcClient = null;
         }
         if (videoView != null) {
+        	this.parent.removeView(videoView);
+        	this.parent.addView(this.canvas.getView());
         	videoView.release();
         	videoView = null;
         }
@@ -227,9 +231,12 @@ PeerConnectionClient.PeerConnectionEvents {
 		
 		video.setLayoutParams(canvas.getView().getLayoutParams());
 
-		ViewGroup parent = (ViewGroup)canvas.getView().getParent();
+		this.parent = (ViewGroup)canvas.getView().getParent();
 		
 		if(parent != null) {
+			
+			this.canvas = canvas;
+			
 			parent.removeView(video);
 			parent.addView(video);
 			
@@ -299,8 +306,8 @@ PeerConnectionClient.PeerConnectionEvents {
 	}
 	
 	@SimpleFunction
-	public void CreateVideoCall(String roomID, Canvas canvas) {
-		initWebRTC(roomID, canvas);
+	public void CreateVideoCall(String roomID, Canvas canvas, boolean sendVideo) {
+		initWebRTC(roomID, canvas, sendVideo);
 	}
 	
 	@SimpleFunction
