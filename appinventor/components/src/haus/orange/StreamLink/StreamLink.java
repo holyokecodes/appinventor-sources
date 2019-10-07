@@ -138,12 +138,12 @@ PeerConnectionClient.PeerConnectionEvents {
         int videoHeight = 0;
         
         peerConnectionParameters =
-                new PeerConnectionClient.PeerConnectionParameters(sendVideo,
+                new PeerConnectionClient.PeerConnectionParameters(true,
                         false,
                         false,
                         videoWidth,
                         videoHeight,
-                        0,
+                        videoFrameRate,
                         1700,
                         "VP8",
                         true,
