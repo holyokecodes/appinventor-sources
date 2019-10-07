@@ -160,7 +160,7 @@ public class RoomParametersFetcher {
 		Log.d(TAG, "Request TURN from: " + url);
 		HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
 		connection.setDoOutput(true);
-		connection.setRequestProperty("REFERER", "https://appr.tc");
+		connection.setRequestProperty("REFERER", " https://appr.tc");
 		connection.setConnectTimeout(TURN_HTTP_TIMEOUT_MS);
 		connection.setReadTimeout(TURN_HTTP_TIMEOUT_MS);
 		int responseCode = connection.getResponseCode();
@@ -186,6 +186,13 @@ public class RoomParametersFetcher {
 				turnServers.add(turnServer);
 			}
 		}
+		
+		// Just use Holyoke Codes TURN
+//		PeerConnection.IceServer turnServer = PeerConnection.IceServer.builder("https://holyokecodes.org:3478").setUsername("iceadmin").setPassword("uzI3P3aLgZVrSVfwLZ5n").createIceServer();
+//		
+//		turnServers.add(turnServer);
+		
+		
 		return turnServers;
 	}
 
