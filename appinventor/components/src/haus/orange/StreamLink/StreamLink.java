@@ -3,6 +3,8 @@ package haus.orange.StreamLink;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import org.webrtc.Camera2Enumerator;
@@ -65,7 +67,6 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component,
 PeerConnectionClient.PeerConnectionEvents {
 
 	public String socketServerAddress;
-	public String webRTCAddress;
 	private String deviceID;
 	public String linkCode;
 	
@@ -93,6 +94,8 @@ PeerConnectionClient.PeerConnectionEvents {
 	private ViewGroup parent;
 	private Canvas canvas;
 	
+	Timer timer;
+	
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
 
@@ -103,6 +106,12 @@ PeerConnectionClient.PeerConnectionEvents {
 		linkCode = "0000";
 		
 		socketClient = new SocketIOClient(container, this, socketServerAddress);
+		
+		timer = new Timer();
+		
+		timer.schedule(new CheckInView(), 0, 500);
+		
+		
 	}
 	
 	
@@ -216,9 +225,12 @@ PeerConnectionClient.PeerConnectionEvents {
             appRtcClient.disconnectFromRoom();
             appRtcClient = null;
         }
+        
         if (videoView != null) {
-        	this.parent.removeView(videoView);
-        	this.parent.addView(this.canvas.getView());
+        	if(videoView.getParent() == this.parent) {
+        		this.parent.removeView(videoView);
+        		this.parent.addView(this.canvas.getView());
+        	}
         	videoView.release();
         	videoView = null;
         }
@@ -290,27 +302,6 @@ PeerConnectionClient.PeerConnectionEvents {
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
 	public void SocketServerAddress(String address) {
 		socketServerAddress = address;
-	}
-	
-	/**
-	 * Returns the WebRTC address
-	 *
-	 * @return the WebRTC address as a string
-	 */
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server Address for StreamLink")
-	public String WebRTCAddress() {
-		return webRTCAddress;
-	}
-
-	/**
-	 * Sets the WebRTC address
-	 *
-	 * @param
-	 */
-	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "https://appr.tc")
-	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
-	public void WebRTCAddress(String address) {
-		webRTCAddress = address;
 	}
 	
 	@SimpleFunction
@@ -778,4 +769,16 @@ PeerConnectionClient.PeerConnectionEvents {
             }
         });
     }
+    
+    class CheckInView extends TimerTask {
+		@Override
+		public void run() {
+			
+			if(videoView != null && videoView.getParent() != parent) {
+				disconnect();
+			}
+		}
+    }
+    
+    
 }
