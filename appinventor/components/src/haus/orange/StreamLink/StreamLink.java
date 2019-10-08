@@ -136,6 +136,14 @@ PeerConnectionClient.PeerConnectionEvents {
 		
 		int videoWidth = 0;
         int videoHeight = 0;
+        int videoFrameRate = 0;
+        
+        if(!sendVideo) {
+        	videoWidth = 320;
+        	videoHeight = 240;
+        	videoFrameRate = 10;
+        }
+        
         
         peerConnectionParameters =
                 new PeerConnectionClient.PeerConnectionParameters(true,
