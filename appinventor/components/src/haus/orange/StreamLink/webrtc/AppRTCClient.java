@@ -47,7 +47,7 @@ public interface AppRTCClient {
 	 * parameters. Once connection is established onConnectedToRoom() callback with
 	 * room parameters is invoked.
 	 */
-	void connectToRoom(RoomConnectionParameters connectionParameters);
+	void connectToRoom(RoomConnectionParameters connectionParameters, String apprtcInstanceURL);
 
 	/**
 	 * Send offer SDP to the other participant.
