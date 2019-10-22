@@ -62,7 +62,7 @@ public class RoomParametersFetcher {
 		this.events = events;
 	}
 
-	public void makeRequest() {
+	public void makeRequest(final String apprtcInstanceURL) {
 		Log.d(TAG, "Connecting to room: " + roomUrl);
 		AsyncHttpURLConnection httpConnection = new AsyncHttpURLConnection("POST", roomUrl, roomMessage,
 				new AsyncHttpEvents() {
@@ -74,13 +74,13 @@ public class RoomParametersFetcher {
 
 					@Override
 					public void onHttpComplete(String response) {
-						roomHttpResponseParse(response);
+						roomHttpResponseParse(response, apprtcInstanceURL);
 					}
 				});
 		httpConnection.send();
 	}
 
-	private void roomHttpResponseParse(String response) {
+	private void roomHttpResponseParse(String response, String apprtcInstanceURL) {
 		Log.d(TAG, "Room response: " + response);
 		try {
 			List<IceCandidate> iceCandidates = null;
@@ -136,7 +136,7 @@ public class RoomParametersFetcher {
 			}
 			// Request TURN servers.
 			if (!isTurnPresent && !roomJson.optString("ice_server_url").isEmpty()) {
-				List<PeerConnection.IceServer> turnServers = requestTurnServers(roomJson.getString("ice_server_url"));
+				List<PeerConnection.IceServer> turnServers = requestTurnServers(roomJson.getString("ice_server_url"), apprtcInstanceURL);
 				for (PeerConnection.IceServer turnServer : turnServers) {
 					Log.d(TAG, "TurnServer: " + turnServer);
 					iceServers.add(turnServer);
@@ -155,12 +155,12 @@ public class RoomParametersFetcher {
 
 	// Requests & returns a TURN ICE Server based on a request URL. Must be run
 	// off the main thread!
-	private List<PeerConnection.IceServer> requestTurnServers(String url) throws IOException, JSONException {
+	private List<PeerConnection.IceServer> requestTurnServers(String url, String apprtcInstanceURL) throws IOException, JSONException {
 		List<PeerConnection.IceServer> turnServers = new ArrayList<>();
 		Log.d(TAG, "Request TURN from: " + url);
 		HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
 		connection.setDoOutput(true);
-		connection.setRequestProperty("REFERER", "https://appr.tc");
+		connection.setRequestProperty("REFERER", apprtcInstanceURL);
 		connection.setConnectTimeout(TURN_HTTP_TIMEOUT_MS);
 		connection.setReadTimeout(TURN_HTTP_TIMEOUT_MS);
 		int responseCode = connection.getResponseCode();

@@ -67,6 +67,7 @@ public class StreamLink extends AndroidNonvisibleComponent implements Component,
 PeerConnectionClient.PeerConnectionEvents {
 
 	public String socketServerAddress;
+	public String apprtcServerAddress;
 	private String deviceID;
 	public String linkCode;
 	
@@ -102,6 +103,7 @@ PeerConnectionClient.PeerConnectionEvents {
 		this.container = container;
 
 		socketServerAddress = "https://stream-link.herokuapp.com/";
+		apprtcServerAddress = "https://streamlink-255116.appspot.com";
 		deviceID = getDeviceID();
 		linkCode = "0000";
 		
@@ -141,7 +143,8 @@ PeerConnectionClient.PeerConnectionEvents {
 	
 	// If you want to send video
 	private void connectVideoCall(String roomID, boolean sendVideo) {
-		Uri roomUri = Uri.parse("https://appr.tc");
+		
+		Uri roomUri = Uri.parse(apprtcServerAddress);
 		
 		int videoWidth = 0;
         int videoHeight = 0;
@@ -200,7 +203,7 @@ PeerConnectionClient.PeerConnectionEvents {
 
         // Start room connection.
         logAndToast("Connecting To: " + roomConnectionParameters.roomUrl);
-        appRtcClient.connectToRoom(roomConnectionParameters);
+        appRtcClient.connectToRoom(roomConnectionParameters, apprtcServerAddress);
     }
 	
 	@UiThread
@@ -302,6 +305,28 @@ PeerConnectionClient.PeerConnectionEvents {
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
 	public void SocketServerAddress(String address) {
 		socketServerAddress = address;
+	}
+	
+	
+	/**
+	 * Returns the apprtc servers address
+	 *
+	 * @return the server url address as a string
+	 */
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Server IP for AppRTC Instance")
+	public String AppRTCServerAddress() {
+		return apprtcServerAddress;
+	}
+
+	/**
+	 * Sets the apprtc servers address
+	 *
+	 * @param
+	 */
+	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_STRING, defaultValue = "https://streamlink-255116.appspot.com")
+	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
+	public void AppRTCServerAddress(String address) {
+		apprtcServerAddress = address;
 	}
 	
 	@SimpleFunction
