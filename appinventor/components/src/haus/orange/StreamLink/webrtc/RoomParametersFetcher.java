@@ -148,7 +148,8 @@ public class RoomParametersFetcher {
 			events.onSignalingParametersReady(params);
 		} catch (JSONException e) {
 			events.onSignalingParametersError("Room JSON parsing error: " + e.toString());
-		} catch (IOException e) {
+		}
+      catch (IOException e) {
 			events.onSignalingParametersError("Room IO error: " + e.toString());
 		}
 	}
@@ -187,11 +188,6 @@ public class RoomParametersFetcher {
 			}
 		}
 		
-		// Just use Holyoke Codes TURN
-//		PeerConnection.IceServer turnServer = PeerConnection.IceServer.builder("https://holyokecodes.org:3478").setUsername("iceadmin").setPassword("uzI3P3aLgZVrSVfwLZ5n").createIceServer();
-//		
-//		turnServers.add(turnServer);
-		
 		
 		return turnServers;
 	}
@@ -205,6 +201,7 @@ public class RoomParametersFetcher {
 		for (int i = 0; i < servers.length(); ++i) {
 			JSONObject server = servers.getJSONObject(i);
 			String url = server.getString("urls");
+			Log.w("FOUND SERVER: ", url);
 			String credential = server.has("credential") ? server.getString("credential") : "";
 			PeerConnection.IceServer turnServer = PeerConnection.IceServer.builder(url).setPassword(credential)
 					.createIceServer();
