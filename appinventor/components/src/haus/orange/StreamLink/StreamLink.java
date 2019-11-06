@@ -139,12 +139,12 @@ public class StreamLink extends AndroidNonvisibleComponent
 		peerConnectionClient = new PeerConnectionClient();
 
 		videoView.init(peerConnectionClient.getRenderContext(), null);
-		videoView.setScalingType(ScalingType.SCALE_ASPECT_FILL);
+		videoView.setScalingType(ScalingType.SCALE_ASPECT_FIT);
 
 		videoView.setEnableHardwareScaler(true);
 		
 		hiddenView.init(peerConnectionClient.getRenderContext(), null);
-		hiddenView.setScalingType(ScalingType.SCALE_ASPECT_FILL);
+		hiddenView.setScalingType(ScalingType.SCALE_ASPECT_FIT);
 
 		hiddenView.setEnableHardwareScaler(true);
 		
@@ -173,7 +173,8 @@ public class StreamLink extends AndroidNonvisibleComponent
 				videoHeight, videoFrameRate, 1700, "VP8", true, false, 32, "OPUS", false, false, false, false, false,
 				false, false, false, null);
 
-		appRtcClient = new WebSocketRTCClient(this);
+		
+		appRtcClient = new WebSocketRTCClient(deviceID, this);
 		roomConnectionParameters = new AppRTCClient.RoomConnectionParameters(roomUri.toString(), roomID, false, null);
 
 		peerConnectionClient.createPeerConnectionFactory(this.container.$context(), peerConnectionParameters, this);
@@ -315,7 +316,7 @@ public class StreamLink extends AndroidNonvisibleComponent
 	 * @return alwaysShowPreview boolean
 	 */
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR, description = "Should the app always show the preview")
-	public boolean AlwaysShowPreview() {
+	public boolean AlwaysShowLocalVideo() {
 		return alwaysShowPreview;
 	}
 
@@ -326,7 +327,7 @@ public class StreamLink extends AndroidNonvisibleComponent
 	 */
 	@DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN, defaultValue = "false")
 	@SimpleProperty(category = PropertyCategory.BEHAVIOR)
-	public void AlwaysShowPreview(boolean showPreview) {
+	public void AlwaysShowLocalVideo(boolean showPreview) {
 		alwaysShowPreview = showPreview;
 	}
 	
