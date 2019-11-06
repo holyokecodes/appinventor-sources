@@ -60,7 +60,7 @@ devices to communicate across networks.
 
 @DesignerComponent(version = 6, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
 @SimpleObject(external = true)
-@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, autobahn.jar, webrtc.jar")
+@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, autobahn.jar")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
 public class StreamLink extends AndroidNonvisibleComponent
 		implements Component, SocketIOEvents, AppRTCClient.SignalingEvents, PeerConnectionClient.PeerConnectionEvents {
