@@ -58,9 +58,11 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
 	private RoomConnectionParameters connectionParameters;
 	private String messageUrl;
 	private String leaveUrl;
+	private String deviceID;
 
-	public WebSocketRTCClient(SignalingEvents events) {
+	public WebSocketRTCClient(String deviceID, SignalingEvents events) {
 		this.events = events;
+		this.deviceID = deviceID;
 		roomState = ConnectionState.NEW;
 		final HandlerThread handlerThread = new HandlerThread(TAG);
 		handlerThread.start();
@@ -98,7 +100,7 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
 		String connectionUrl = getConnectionUrl(connectionParameters);
 		Log.d(TAG, "Connect to room: " + connectionUrl);
 		roomState = ConnectionState.NEW;
-		wsClient = new WebSocketChannelClient(handler, this);
+		wsClient = new WebSocketChannelClient(deviceID, handler, this);
 
 		RoomParametersFetcherEvents callbacks = new RoomParametersFetcherEvents() {
 			@Override

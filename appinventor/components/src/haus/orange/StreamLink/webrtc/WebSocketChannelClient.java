@@ -36,6 +36,7 @@ public class WebSocketChannelClient {
 	private String postServerUrl;
 	private String roomID;
 	private String clientID;
+	private String deviceID;
 	private WebSocketConnectionState state;
 	// Do not remove this member variable. If this is removed, the observer gets
 	// garbage collected and
@@ -66,9 +67,10 @@ public class WebSocketChannelClient {
 		void onWebSocketError(final String description);
 	}
 
-	public WebSocketChannelClient(Handler handler, WebSocketChannelEvents events) {
+	public WebSocketChannelClient(String deviceID, Handler handler, WebSocketChannelEvents events) {
 		this.handler = handler;
 		this.events = events;
+		this.deviceID = deviceID;
 		roomID = null;
 		clientID = null;
 		state = WebSocketConnectionState.NEW;
@@ -113,7 +115,7 @@ public class WebSocketChannelClient {
 		try {
 			json.put("cmd", "register");
 			json.put("roomid", roomID);
-			json.put("clientid", clientID);
+			json.put("clientid", deviceID);
 			Log.d(TAG, "C->WSS: " + json.toString());
 			ws.sendTextMessage(json.toString());
 			state = WebSocketConnectionState.REGISTERED;
