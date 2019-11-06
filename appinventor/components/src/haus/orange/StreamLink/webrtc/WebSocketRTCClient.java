@@ -119,7 +119,7 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
 			}
 		};
 
-		new RoomParametersFetcher(connectionUrl, null, callbacks).makeRequest(apprtcInstanceURL);
+		new RoomParametersFetcher(connectionUrl, "this is the room message", callbacks).makeRequest(apprtcInstanceURL);
 	}
 
 	// Disconnect from room and send bye messages - runs on a local looper thread.
