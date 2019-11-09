@@ -26,6 +26,7 @@ import com.google.appinventor.components.annotations.SimpleFunction;
 import com.google.appinventor.components.annotations.SimpleObject;
 import com.google.appinventor.components.annotations.SimpleProperty;
 import com.google.appinventor.components.annotations.UsesLibraries;
+import com.google.appinventor.components.annotations.UsesNativeLibraries;
 import com.google.appinventor.components.annotations.UsesPermissions;
 import com.google.appinventor.components.common.ComponentCategory;
 import com.google.appinventor.components.common.PropertyTypeConstants;
@@ -60,7 +61,10 @@ devices to communicate across networks.
 
 @DesignerComponent(version = 6, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
 @SimpleObject(external = true)
-@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, autobahn.jar")
+@UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, autobahn.jar, webrtc.jar")
+@UsesNativeLibraries(v7aLibraries = "libjingle_peerconnection_so.so",
+					 v8aLibraries = "libjingle_peerconnection_so.so",
+					 x86_64Libraries = "libjingle_peerconnection_so.so")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
 public class StreamLink extends AndroidNonvisibleComponent
 		implements Component, SocketIOEvents, AppRTCClient.SignalingEvents, PeerConnectionClient.PeerConnectionEvents {
