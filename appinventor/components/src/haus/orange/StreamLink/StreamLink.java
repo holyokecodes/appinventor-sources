@@ -59,8 +59,8 @@ Link is a component designed to allow
 devices to communicate across networks.
 */
 
-@DesignerComponent(version = 6, description = "Allows Streaming Data Across Networks", category = ComponentCategory.EXTENSION, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
-@SimpleObject(external = true)
+@DesignerComponent(version = 6, description = "Allows Streaming Data Across Networks", category = ComponentCategory.MEDIA, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
+@SimpleObject(external = false)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, autobahn.jar, webrtc.jar")
 @UsesNativeLibraries(v7aLibraries = "libjingle_peerconnection_so.so",
 					 v8aLibraries = "libjingle_peerconnection_so.so",
@@ -123,7 +123,7 @@ public class StreamLink extends AndroidNonvisibleComponent
 
 	}
 
-	private void initWebRTC(String roomID, Canvas canvas, boolean sendVideo) {
+	private void initWebRTC(String roomID, Canvas canvas) {
 
 		iceConnected = false;
 		signalingParameters = null;
@@ -155,23 +155,17 @@ public class StreamLink extends AndroidNonvisibleComponent
 		localProxyVideoSink.setTarget(videoView);
 		remoteProxyRenderer.setTarget(hiddenView);
 
-		connectVideoCall(roomID, sendVideo);
+		connectVideoCall(roomID);
 	}
 
 	// If you want to send video
-	private void connectVideoCall(String roomID, boolean sendVideo) {
+	private void connectVideoCall(String roomID) {
 
 		Uri roomUri = Uri.parse(apprtcServerAddress);
 
 		int videoWidth = 0;
 		int videoHeight = 0;
 		int videoFrameRate = 0;
-
-		if (!sendVideo) {
-			videoWidth = 320;
-			videoHeight = 240;
-			videoFrameRate = 10;
-		}
 
 		peerConnectionParameters = new PeerConnectionClient.PeerConnectionParameters(true, false, false, videoWidth,
 				videoHeight, videoFrameRate, 1700, "VP8", true, false, 32, "OPUS", false, false, false, false, false,
@@ -378,8 +372,8 @@ public class StreamLink extends AndroidNonvisibleComponent
 	}
 
 	@SimpleFunction
-	public void CreateVideoCall(String roomID, Canvas canvas, boolean sendVideo) {
-		initWebRTC(roomID, canvas, sendVideo);
+	public void CreateVideoCall(String roomID, Canvas canvas) {
+		initWebRTC(roomID, canvas);
 	}
 
 	@SimpleFunction
