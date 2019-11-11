@@ -35,7 +35,9 @@ import com.google.appinventor.components.runtime.Canvas;
 import com.google.appinventor.components.runtime.Component;
 import com.google.appinventor.components.runtime.ComponentContainer;
 import com.google.appinventor.components.runtime.EventDispatcher;
+import com.google.appinventor.components.runtime.PermissionResultHandler;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -62,9 +64,7 @@ devices to communicate across networks.
 @DesignerComponent(version = 6, description = "Allows Streaming Data Across Networks", category = ComponentCategory.MEDIA, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
 @SimpleObject(external = false)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, autobahn.jar, webrtc.jar")
-@UsesNativeLibraries(v7aLibraries = "libjingle_peerconnection_so.so",
-					 v8aLibraries = "libjingle_peerconnection_so.so",
-					 x86_64Libraries = "libjingle_peerconnection_so.so")
+@UsesNativeLibraries(v7aLibraries = "libjingle_peerconnection_so.so", v8aLibraries = "libjingle_peerconnection_so.so", x86_64Libraries = "libjingle_peerconnection_so.so")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
 public class StreamLink extends AndroidNonvisibleComponent
 		implements Component, SocketIOEvents, AppRTCClient.SignalingEvents, PeerConnectionClient.PeerConnectionEvents {
@@ -103,24 +103,97 @@ public class StreamLink extends AndroidNonvisibleComponent
 
 	Timer timer;
 
+	private boolean hasStoragePerm = false;
+	private boolean hasAudioPerm = false;
+	private boolean hasCameraPerm = false;
+	private boolean hasInternetPerm = false;
+
 	public StreamLink(ComponentContainer container) {
 		super(container.$form());
 
 		this.container = container;
 
+		checkStoragePermission();
+		
+
 		socketServerAddress = "https://stream-link.herokuapp.com/";
 		apprtcServerAddress = "https://streamlink-255116.appspot.com";
 		alwaysShowPreview = false;
-		deviceID = getDeviceID(this.container.$context());
+		if (!hasStoragePerm) {
+			deviceID = getDeviceID(this.container.$context());
+		}
 		linkCode = "0000";
 		defaultCamera = "FRONT";
-
 		socketClient = new SocketIOClient(container, this, socketServerAddress);
-
 		timer = new Timer();
-
 		timer.schedule(new CheckInView(), 0, 500);
+	}
 
+	private void checkStoragePermission() {
+		if (!hasStoragePerm) {
+			final StreamLink me = this;
+			form.askPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, new PermissionResultHandler() {
+				@Override
+				public void HandlePermissionResponse(String permission, boolean granted) {
+					if (granted) {
+						me.hasStoragePerm = true;
+						me.checkAudioPermission();
+					} else {
+						me.logAndToast("Failed to get Storage Permission");
+					}
+				}
+			});
+		}
+	}
+
+	private void checkAudioPermission() {
+		if (!hasAudioPerm) {
+			final StreamLink me = this;
+			form.askPermission(Manifest.permission.RECORD_AUDIO, new PermissionResultHandler() {
+				@Override
+				public void HandlePermissionResponse(String permission, boolean granted) {
+					if (granted) {
+						me.hasAudioPerm = true;
+						checkCameraPermission();
+					} else {
+						me.logAndToast("Failed to get Audio Permission");
+					}
+				}
+			});
+		}
+	}
+
+	private void checkCameraPermission() {
+		if (!hasCameraPerm) {
+			final StreamLink me = this;
+			form.askPermission(Manifest.permission.CAMERA, new PermissionResultHandler() {
+				@Override
+				public void HandlePermissionResponse(String permission, boolean granted) {
+					if (granted) {
+						me.hasCameraPerm = true;
+						me.checkInternetPermission();
+					} else {
+						me.logAndToast("Failed to get Camera Permission");
+					}
+				}
+			});
+		}
+	}
+	
+	private void checkInternetPermission() {
+		if (!hasInternetPerm) {
+			final StreamLink me = this;
+			form.askPermission(Manifest.permission.INTERNET, new PermissionResultHandler() {
+				@Override
+				public void HandlePermissionResponse(String permission, boolean granted) {
+					if (granted) {
+						me.hasInternetPerm = true;
+					} else {
+						me.logAndToast("Failed to get Internet Permission");
+					}
+				}
+			});
+		}
 	}
 
 	private void initWebRTC(String roomID, Canvas canvas) {
@@ -131,7 +204,7 @@ public class StreamLink extends AndroidNonvisibleComponent
 		if (videoView == null) {
 			videoView = new SurfaceViewRenderer(this.container.$context());
 		}
-		
+
 		if (hiddenView == null) {
 			hiddenView = new SurfaceViewRenderer(this.container.$context());
 		}
@@ -146,12 +219,12 @@ public class StreamLink extends AndroidNonvisibleComponent
 		videoView.setScalingType(ScalingType.SCALE_ASPECT_FIT);
 
 		videoView.setEnableHardwareScaler(true);
-		
+
 		hiddenView.init(peerConnectionClient.getRenderContext(), null);
 		hiddenView.setScalingType(ScalingType.SCALE_ASPECT_FIT);
 
 		hiddenView.setEnableHardwareScaler(true);
-		
+
 		localProxyVideoSink.setTarget(videoView);
 		remoteProxyRenderer.setTarget(hiddenView);
 
@@ -171,18 +244,15 @@ public class StreamLink extends AndroidNonvisibleComponent
 				videoHeight, videoFrameRate, 1700, "VP8", true, false, 32, "OPUS", false, false, false, false, false,
 				false, false, false, null);
 
-		
 		appRtcClient = new WebSocketRTCClient(deviceID, this);
 		roomConnectionParameters = new AppRTCClient.RoomConnectionParameters(roomUri.toString(), roomID, false, null);
 
 		peerConnectionClient.createPeerConnectionFactory(this.container.$context(), peerConnectionParameters, this);
 
-		
-		if(this.defaultCamera == "REAR") {
+		if (this.defaultCamera == "REAR") {
 			SwitchCamera();
 		}
-		
-		
+
 		startCall();
 	}
 
@@ -209,8 +279,7 @@ public class StreamLink extends AndroidNonvisibleComponent
 		// Enable statistics callback.
 		peerConnectionClient.enableStatsEvents(true, STAT_CALLBACK_PERIOD);
 
-		
-		if(!alwaysShowPreview) {
+		if (!alwaysShowPreview) {
 			localProxyVideoSink.setTarget(hiddenView);
 			remoteProxyRenderer.setTarget(videoView);
 		}
@@ -233,12 +302,12 @@ public class StreamLink extends AndroidNonvisibleComponent
 			videoView.release();
 			videoView = null;
 		}
-		
+
 		if (hiddenView != null) {
 			hiddenView.release();
 			hiddenView = null;
 		}
-		
+
 		if (peerConnectionClient != null) {
 			peerConnectionClient.close();
 			peerConnectionClient = null;
@@ -328,7 +397,7 @@ public class StreamLink extends AndroidNonvisibleComponent
 	public void AlwaysShowLocalVideo(boolean showPreview) {
 		alwaysShowPreview = showPreview;
 	}
-	
+
 	/**
 	 * Returns the default camera the app should use
 	 *
@@ -373,7 +442,13 @@ public class StreamLink extends AndroidNonvisibleComponent
 
 	@SimpleFunction
 	public void CreateVideoCall(String roomID, Canvas canvas) {
-		initWebRTC(roomID, canvas);
+
+		checkStoragePermission();
+		if (this.hasAudioPerm && this.hasCameraPerm && this.hasStoragePerm && this.hasInternetPerm) {
+			initWebRTC(roomID, canvas);
+		} else {
+			logAndToast("Missing required permissions (Audio, Camera, Storage, Internet)");
+		}
 	}
 
 	@SimpleFunction
@@ -396,8 +471,12 @@ public class StreamLink extends AndroidNonvisibleComponent
 	 */
 	@SimpleFunction
 	public void CreateLink(String password, String description) {
-
-		socketClient.createLink(this.deviceID, password, description);
+		checkStoragePermission();
+		if (this.hasAudioPerm && this.hasCameraPerm && this.hasStoragePerm && this.hasInternetPerm) {
+			socketClient.createLink(this.deviceID, password, description);
+		} else {
+			logAndToast("Missing required permissions (Audio, Camera, Storage, Internet)");
+		}
 
 	}
 
@@ -409,8 +488,12 @@ public class StreamLink extends AndroidNonvisibleComponent
 	 */
 	@SimpleFunction
 	public void ConnectToLink(String linkCode, String password) {
-
-		socketClient.connectToLink(this.deviceID, linkCode, password);
+		checkStoragePermission();
+		if (this.hasAudioPerm && this.hasCameraPerm && this.hasStoragePerm && this.hasInternetPerm) {
+			socketClient.connectToLink(this.deviceID, linkCode, password);
+		} else {
+			logAndToast("Missing required permissions (Audio, Camera, Storage, Internet)");
+		}
 
 	}
 
