@@ -59,7 +59,11 @@ Link is a component designed to allow
 devices to communicate across networks.
 */
 
-@DesignerComponent(version = 6, description = "Allows Streaming Data Across Networks", category = ComponentCategory.MEDIA, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
+@DesignerComponent(version = 6, 
+				   description = "Allows Streaming Data Across Networks", 
+				   category = ComponentCategory.MEDIA, 
+				   nonVisible = true, 
+				   iconName = "https://orange.haus/link/icon5.png")
 @SimpleObject(external = false)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, autobahn.jar, webrtc.jar")
 @UsesNativeLibraries(v7aLibraries = "libjingle_peerconnection_so.so",
