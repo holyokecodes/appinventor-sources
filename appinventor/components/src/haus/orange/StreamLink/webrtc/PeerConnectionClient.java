@@ -668,7 +668,9 @@ public class PeerConnectionClient {
 			factory.stopAecDump();
 		}
 		Log.d(TAG, "Closing peer connection.");
-		statsTimer.cancel();
+		if (statsTimer != null) {
+			statsTimer.cancel();
+		}
 		if (dataChannel != null) {
 			dataChannel.dispose();
 			dataChannel = null;
