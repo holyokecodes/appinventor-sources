@@ -123,9 +123,6 @@ public class StreamLink extends AndroidNonvisibleComponent
 		socketServerAddress = "https://stream-link.herokuapp.com/";
 		apprtcServerAddress = "https://streamlink-255116.appspot.com";
 		alwaysShowPreview = false;
-		if (!hasStoragePerm) {
-			deviceID = getDeviceID(this.container.$context());
-		}
 		linkCode = "0000";
 		defaultCamera = "FRONT";
 		socketClient = new SocketIOClient(container, this, socketServerAddress);
@@ -141,6 +138,7 @@ public class StreamLink extends AndroidNonvisibleComponent
 				public void HandlePermissionResponse(String permission, boolean granted) {
 					if (granted) {
 						me.hasStoragePerm = true;
+						me.deviceID = getDeviceID(me.container.$context());
 						me.checkAudioPermission();
 					} else {
 						me.logAndToast("Failed to get Storage Permission");
@@ -220,12 +218,12 @@ public class StreamLink extends AndroidNonvisibleComponent
 		peerConnectionClient = new PeerConnectionClient();
 
 		videoView.init(peerConnectionClient.getRenderContext(), null);
-		videoView.setScalingType(ScalingType.SCALE_ASPECT_FIT);
+		videoView.setScalingType(ScalingType.SCALE_ASPECT_BALANCED);
 
 		videoView.setEnableHardwareScaler(true);
 
 		hiddenView.init(peerConnectionClient.getRenderContext(), null);
-		hiddenView.setScalingType(ScalingType.SCALE_ASPECT_FIT);
+		hiddenView.setScalingType(ScalingType.SCALE_ASPECT_BALANCED);
 
 		hiddenView.setEnableHardwareScaler(true);
 
