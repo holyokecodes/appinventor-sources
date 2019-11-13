@@ -2,20 +2,24 @@ package haus.orange.StreamLink;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
+import org.webrtc.Camera1Enumerator;
 import org.webrtc.Camera2Enumerator;
 import org.webrtc.CameraEnumerator;
+import org.webrtc.EglBase;
 import org.webrtc.IceCandidate;
+import org.webrtc.PeerConnectionFactory;
 import org.webrtc.RendererCommon.ScalingType;
 import org.webrtc.SessionDescription;
 import org.webrtc.StatsReport;
 import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoCapturer;
+import org.webrtc.VideoFileRenderer;
 import org.webrtc.VideoFrame;
-import org.webrtc.VideoRenderer;
 import org.webrtc.VideoSink;
 
 import com.google.appinventor.components.annotations.DesignerComponent;
@@ -37,6 +41,7 @@ import com.google.appinventor.components.runtime.ComponentContainer;
 import com.google.appinventor.components.runtime.EventDispatcher;
 import com.google.appinventor.components.runtime.PermissionResultHandler;
 
+import android.support.annotation.Nullable;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -49,10 +54,17 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 import haus.orange.StreamLink.socketio.SocketIOClient;
 import haus.orange.StreamLink.socketio.SocketIOEvents;
-import haus.orange.StreamLink.webrtc.AppRTCClient;
-import haus.orange.StreamLink.webrtc.AppRTCClient.SignalingParameters;
-import haus.orange.StreamLink.webrtc.PeerConnectionClient;
-import haus.orange.StreamLink.webrtc.WebSocketRTCClient;
+import haus.orange.webrtc.AppRTCAudioManager;
+import haus.orange.webrtc.AppRTCAudioManager.AudioDevice;
+import haus.orange.webrtc.AppRTCAudioManager.AudioManagerEvents;
+import haus.orange.webrtc.AppRTCClient;
+import haus.orange.webrtc.AppRTCClient.RoomConnectionParameters;
+import haus.orange.webrtc.AppRTCClient.SignalingParameters;
+import haus.orange.webrtc.DirectRTCClient;
+import haus.orange.webrtc.PeerConnectionClient;
+import haus.orange.webrtc.PeerConnectionClient.PeerConnectionEvents;
+import haus.orange.webrtc.PeerConnectionClient.PeerConnectionParameters;
+import haus.orange.webrtc.WebSocketRTCClient;
 
 /*
 Jacob Bashista 5/27/19
@@ -61,17 +73,13 @@ Link is a component designed to allow
 devices to communicate across networks.
 */
 
-@DesignerComponent(version = 6, 
-				   description = "Allows Streaming Data Across Networks", 
-				   category = ComponentCategory.MEDIA, 
-				   nonVisible = true, 
-				   iconName = "https://orange.haus/link/icon5.png")
+@DesignerComponent(version = 6, description = "Allows Streaming Data Across Networks", category = ComponentCategory.MEDIA, nonVisible = true, iconName = "https://orange.haus/link/icon5.png")
 @SimpleObject(external = false)
 @UsesLibraries(libraries = "okio.jar, okhttp.jar, engineio.jar, socketio.jar, autobahn.jar, webrtc.jar")
 @UsesNativeLibraries(v7aLibraries = "libjingle_peerconnection_so.so", v8aLibraries = "libjingle_peerconnection_so.so", x86_64Libraries = "libjingle_peerconnection_so.so")
 @UsesPermissions(permissionNames = "android.permission.RECORD_AUDIO, android.permission.INTERNET, android.permission.WRITE_EXTERNAL_STORAGE, android.permission.CAMERA")
 public class StreamLink extends AndroidNonvisibleComponent
-		implements Component, SocketIOEvents, AppRTCClient.SignalingEvents, PeerConnectionClient.PeerConnectionEvents {
+		implements Component, SocketIOEvents, AppRTCClient.SignalingEvents, PeerConnectionEvents {
 
 	public String socketServerAddress;
 	public String apprtcServerAddress;
@@ -88,19 +96,35 @@ public class StreamLink extends AndroidNonvisibleComponent
 	private SurfaceViewRenderer hiddenView;
 
 	private static final int STAT_CALLBACK_PERIOD = 1000;
-	private PeerConnectionClient peerConnectionClient = null;
-	private AppRTCClient appRtcClient;
-	private AppRTCClient.SignalingParameters signalingParameters;
-	private boolean iceConnected;
-	private AppRTCClient.RoomConnectionParameters roomConnectionParameters;
-	private final List<VideoRenderer.Callbacks> remoteRenderers = new ArrayList<>();
-	private final ProxyRenderer remoteProxyRenderer = new ProxyRenderer();
-	private PeerConnectionClient.PeerConnectionParameters peerConnectionParameters;
-	private long callStartedTimeMs = 0;
-	private boolean isError;
+	private final ProxyVideoSink remoteProxyRenderer = new ProxyVideoSink();
 	private final ProxyVideoSink localProxyVideoSink = new ProxyVideoSink();
-	private boolean activityRunning;
+	@Nullable
+	private PeerConnectionClient peerConnectionClient;
+	@Nullable
+	private AppRTCClient appRtcClient;
+	@Nullable
+	private SignalingParameters signalingParameters;
+	@Nullable
+	private AppRTCAudioManager audioManager;
+	@Nullable
+	private SurfaceViewRenderer localRenderer;
+	@Nullable
+	private SurfaceViewRenderer remoteRenderer;
+	@Nullable
+	private VideoFileRenderer videoFileRenderer;
+	private final List<VideoSink> remoteSinks = new ArrayList<>();
+	private RoomConnectionParameters roomConnectionParameters;
+	@Nullable
+	private PeerConnectionParameters peerConnectionParameters;
 	private Toast logToast;
+	private boolean commandLineRun;
+	private boolean activityRunning;
+	private boolean connected;
+	private boolean isError;
+	private boolean callControlFragmentVisible = true;
+	private long callStartedTimeMs;
+	private boolean micEnabled = true;
+	private boolean screencaptureEnabled;
 
 	private ViewGroup parent;
 	private Canvas canvas;
@@ -118,7 +142,6 @@ public class StreamLink extends AndroidNonvisibleComponent
 		this.container = container;
 
 		checkStoragePermission();
-		
 
 		socketServerAddress = "https://stream-link.herokuapp.com/";
 		apprtcServerAddress = "https://streamlink-255116.appspot.com";
@@ -183,7 +206,7 @@ public class StreamLink extends AndroidNonvisibleComponent
 			});
 		}
 	}
-	
+
 	private void checkInternetPermission() {
 		if (!hasInternetPerm) {
 			final StreamLink me = this;
@@ -202,7 +225,9 @@ public class StreamLink extends AndroidNonvisibleComponent
 
 	private void initWebRTC(String roomID, Canvas canvas) {
 
-		iceConnected = false;
+		final EglBase eglBase = EglBase.create();
+
+		connected = false;
 		signalingParameters = null;
 
 		if (videoView == null) {
@@ -215,16 +240,14 @@ public class StreamLink extends AndroidNonvisibleComponent
 
 		replaceViewWithCamera(canvas, videoView);
 
-		remoteRenderers.add(remoteProxyRenderer);
+		remoteSinks.add(remoteProxyRenderer);
 
-		peerConnectionClient = new PeerConnectionClient();
-
-		videoView.init(peerConnectionClient.getRenderContext(), null);
+		videoView.init(eglBase.getEglBaseContext(), null);
 		videoView.setScalingType(ScalingType.SCALE_ASPECT_FIT);
 
 		videoView.setEnableHardwareScaler(true);
 
-		hiddenView.init(peerConnectionClient.getRenderContext(), null);
+		hiddenView.init(eglBase.getEglBaseContext(), null);
 		hiddenView.setScalingType(ScalingType.SCALE_ASPECT_FIT);
 
 		hiddenView.setEnableHardwareScaler(true);
@@ -232,11 +255,11 @@ public class StreamLink extends AndroidNonvisibleComponent
 		localProxyVideoSink.setTarget(videoView);
 		remoteProxyRenderer.setTarget(hiddenView);
 
-		connectVideoCall(roomID);
+		connectVideoCall(eglBase, roomID);
 	}
 
 	// If you want to send video
-	private void connectVideoCall(String roomID) {
+	private void connectVideoCall(EglBase eglBase, String roomID) {
 
 		Uri roomUri = Uri.parse(apprtcServerAddress);
 
@@ -244,32 +267,49 @@ public class StreamLink extends AndroidNonvisibleComponent
 		int videoHeight = 0;
 		int videoFrameRate = 0;
 
-		peerConnectionParameters = new PeerConnectionClient.PeerConnectionParameters(true, false, false, videoWidth,
-				videoHeight, videoFrameRate, 1700, "VP8", true, false, 32, "OPUS", false, false, false, false, false,
-				false, false, false, null);
+		peerConnectionParameters = new PeerConnectionParameters(true, false, false, videoWidth, videoHeight,
+				videoFrameRate, 1700, "VP8", true, false, 32, "OPUS", false, false, false, false, false, false, false,
+				false, false, null);
+		commandLineRun = false;
+		int runTimeMs = 0;
 
-		appRtcClient = new WebSocketRTCClient(deviceID, this);
+		if (false || !DirectRTCClient.IP_PATTERN.matcher(roomID).matches()) {
+			appRtcClient = new WebSocketRTCClient(this);
+		} else {
+			logAndToast("Using DirectRTCClient because room name looks like an IP.");
+			appRtcClient = new DirectRTCClient(this);
+		}
 		roomConnectionParameters = new AppRTCClient.RoomConnectionParameters(roomUri.toString(), roomID, false, null);
 
-		peerConnectionClient.createPeerConnectionFactory(this.container.$context(), peerConnectionParameters, this);
+		peerConnectionClient = new PeerConnectionClient(this.container.$context(), eglBase, peerConnectionParameters,
+				this);
 
-		if (this.defaultCamera == "REAR") {
-			SwitchCamera();
-		}
+		PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
+		peerConnectionClient.createPeerConnectionFactory(options);
 
 		startCall();
 	}
 
 	private void startCall() {
 		if (appRtcClient == null) {
-			System.out.println("AppRTC client is not allocated for a call.");
+			logAndToast("AppRTC client is not allocated for a call.");
 			return;
 		}
 		callStartedTimeMs = System.currentTimeMillis();
 
 		// Start room connection.
 		logAndToast("Connecting To: " + roomConnectionParameters.roomUrl);
-		appRtcClient.connectToRoom(roomConnectionParameters, apprtcServerAddress);
+		appRtcClient.connectToRoom(roomConnectionParameters);
+		audioManager = AppRTCAudioManager.create(this.container.$context());
+		audioManager.start(new AudioManagerEvents() {
+			// This method will be called each time the number of available audio
+			// devices has changed.
+			@Override
+			public void onAudioDeviceChanged(AudioDevice audioDevice, Set<AudioDevice> availableAudioDevices) {
+				onAudioManagerDevicesChanged(audioDevice, availableAudioDevices);
+			}
+		});
+
 	}
 
 	@UiThread
@@ -287,6 +327,11 @@ public class StreamLink extends AndroidNonvisibleComponent
 			localProxyVideoSink.setTarget(hiddenView);
 			remoteProxyRenderer.setTarget(videoView);
 		}
+	}
+
+	private void onAudioManagerDevicesChanged(final AudioDevice device, final Set<AudioDevice> availableDevices) {
+		logAndToast("onAudioManagerDevicesChanged: " + availableDevices + ", " + "selected: " + device);
+		// TODO(henrika): add callback handler.
 	}
 
 	private void disconnect() {
@@ -316,8 +361,12 @@ public class StreamLink extends AndroidNonvisibleComponent
 			peerConnectionClient.close();
 			peerConnectionClient = null;
 		}
-		if (iceConnected && !isError) {
-			// setResult("OK");
+		if (audioManager != null) {
+			audioManager.stop();
+			audioManager = null;
+		}
+		if (connected && !isError) {
+			// setResult(RESULT_OK);
 		} else {
 			// setResult(RESULT_CANCELED);
 		}
@@ -582,23 +631,21 @@ public class StreamLink extends AndroidNonvisibleComponent
 	}
 
 	@Override
-	public void onLocalDescription(SessionDescription sdp) {
-
-		final SessionDescription sdp1 = sdp;
+	public void onLocalDescription(final SessionDescription sdp) {
 		final long delta = System.currentTimeMillis() - callStartedTimeMs;
 		this.container.$context().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				if (appRtcClient != null) {
-					logAndToast("Sending " + sdp1.type + ", delay=" + delta + "ms");
+					logAndToast("Sending " + sdp.type + ", delay=" + delta + "ms");
 					if (signalingParameters.initiator) {
-						appRtcClient.sendOfferSdp(sdp1);
+						appRtcClient.sendOfferSdp(sdp);
 					} else {
-						appRtcClient.sendAnswerSdp(sdp1);
+						appRtcClient.sendAnswerSdp(sdp);
 					}
 				}
 				if (peerConnectionParameters.videoMaxBitrate > 0) {
-					System.out.println("Set video maximum bitrate: " + peerConnectionParameters.videoMaxBitrate);
+					logAndToast("Set video maximum bitrate: " + peerConnectionParameters.videoMaxBitrate);
 					peerConnectionClient.setVideoMaxBitrate(peerConnectionParameters.videoMaxBitrate);
 				}
 			}
@@ -606,26 +653,24 @@ public class StreamLink extends AndroidNonvisibleComponent
 	}
 
 	@Override
-	public void onIceCandidate(IceCandidate candidate) {
-		final IceCandidate candidate1 = candidate;
+	public void onIceCandidate(final IceCandidate candidate) {
 		this.container.$context().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				if (appRtcClient != null) {
-					appRtcClient.sendLocalIceCandidate(candidate1);
+					appRtcClient.sendLocalIceCandidate(candidate);
 				}
 			}
 		});
 	}
 
 	@Override
-	public void onIceCandidatesRemoved(IceCandidate[] candidates) {
-		final IceCandidate[] candidates1 = candidates;
+	public void onIceCandidatesRemoved(final IceCandidate[] candidates) {
 		this.container.$context().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				if (appRtcClient != null) {
-					appRtcClient.sendLocalIceCandidateRemovals(candidates1);
+					appRtcClient.sendLocalIceCandidateRemovals(candidates);
 				}
 			}
 		});
@@ -638,23 +683,19 @@ public class StreamLink extends AndroidNonvisibleComponent
 			@Override
 			public void run() {
 				logAndToast("ICE connected, delay=" + delta + "ms");
-				iceConnected = true;
-				callConnected();
 			}
 		});
 	}
 
 	@Override
-	public void onIceDisconnected() {
-		this.container.$context().runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				logAndToast("ICE disconnected");
-				iceConnected = false;
-				disconnect();
-			}
-		});
-	}
+	  public void onIceDisconnected() {
+	    this.container.$context().runOnUiThread(new Runnable() {
+	      @Override
+	      public void run() {
+	        logAndToast("ICE disconnected");
+	      }
+	    });
+	  }
 
 	@Override
 	public void onPeerConnectionClosed() {
@@ -671,10 +712,19 @@ public class StreamLink extends AndroidNonvisibleComponent
 		// DO NOTHING
 	}
 
-	private VideoCapturer createVideoCapturer() {
+	private boolean useCamera2() {
+		return Camera2Enumerator.isSupported(this.container.$context());
+	}
+
+	private @Nullable VideoCapturer createVideoCapturer() {
 		final VideoCapturer videoCapturer;
-		System.out.println("Creating capturer using camera2 API.");
-		videoCapturer = createCameraCapturer(new Camera2Enumerator(this.container.$context()));
+		if (useCamera2()) {
+			logAndToast("Creating capturer using camera2 API.");
+			videoCapturer = createCameraCapturer(new Camera2Enumerator(this.container.$context()));
+		} else {
+			logAndToast("Creating capturer using camera1 API.");
+			videoCapturer = createCameraCapturer(new Camera1Enumerator(false));
+		}
 		if (videoCapturer == null) {
 			reportError("Failed to open camera");
 			return null;
@@ -684,48 +734,40 @@ public class StreamLink extends AndroidNonvisibleComponent
 
 	private VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
 		final String[] deviceNames = enumerator.getDeviceNames();
-
 		// First, try to find front facing camera
-		System.out.println("Looking for front facing cameras.");
+		logAndToast("Looking for front facing cameras.");
 		for (String deviceName : deviceNames) {
 			if (enumerator.isFrontFacing(deviceName)) {
-				System.out.println("Creating front facing camera capturer.");
+				logAndToast("Creating front facing camera capturer.");
 				VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
-
 				if (videoCapturer != null) {
 					return videoCapturer;
 				}
 			}
 		}
-
 		// Front facing camera not found, try something else
-		System.out.println("Looking for other cameras.");
+		logAndToast("Looking for other cameras.");
 		for (String deviceName : deviceNames) {
 			if (!enumerator.isFrontFacing(deviceName)) {
-				System.out.println("Creating other camera capturer.");
+				logAndToast("Creating other camera capturer.");
 				VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
-
 				if (videoCapturer != null) {
 					return videoCapturer;
 				}
 			}
 		}
-
 		return null;
 	}
 
-	private void onConnectedToRoomInternal(final AppRTCClient.SignalingParameters params) {
+	private void onConnectedToRoomInternal(final SignalingParameters params) {
 		final long delta = System.currentTimeMillis() - callStartedTimeMs;
-
 		signalingParameters = params;
 		logAndToast("Creating peer connection, delay=" + delta + "ms");
 		VideoCapturer videoCapturer = null;
 		if (peerConnectionParameters.videoCallEnabled) {
 			videoCapturer = createVideoCapturer();
 		}
-		peerConnectionClient.createPeerConnection(localProxyVideoSink, remoteRenderers, videoCapturer,
-				signalingParameters);
-
+		peerConnectionClient.createPeerConnection(localProxyVideoSink, remoteSinks, videoCapturer, signalingParameters);
 		if (signalingParameters.initiator) {
 			logAndToast("Creating OFFER...");
 			// Create offer. Offer SDP will be sent to answering client in
@@ -749,29 +791,27 @@ public class StreamLink extends AndroidNonvisibleComponent
 	}
 
 	@Override
-	public void onConnectedToRoom(SignalingParameters params) {
-		final SignalingParameters params1 = params;
+	public void onConnectedToRoom(final SignalingParameters params) {
 		this.container.$context().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-				onConnectedToRoomInternal(params1);
+				onConnectedToRoomInternal(params);
 			}
 		});
 	}
 
 	@Override
-	public void onRemoteDescription(SessionDescription sdp) {
-		final SessionDescription sdp1 = sdp;
+	public void onRemoteDescription(final SessionDescription sdp) {
 		final long delta = System.currentTimeMillis() - callStartedTimeMs;
 		this.container.$context().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				if (peerConnectionClient == null) {
-					System.out.println("Received remote SDP for non-initilized peer connection.");
+					logAndToast("Received remote SDP for non-initilized peer connection.");
 					return;
 				}
-				logAndToast("Received remote " + sdp1.type + ", delay=" + delta + "ms");
-				peerConnectionClient.setRemoteDescription(sdp1);
+				logAndToast("Received remote " + sdp.type + ", delay=" + delta + "ms");
+				peerConnectionClient.setRemoteDescription(sdp);
 				if (!signalingParameters.initiator) {
 					logAndToast("Creating ANSWER...");
 					// Create answer. Answer SDP will be sent to offering client in
@@ -780,37 +820,32 @@ public class StreamLink extends AndroidNonvisibleComponent
 				}
 			}
 		});
-
 	}
 
 	@Override
-	public void onRemoteIceCandidate(IceCandidate candidate) {
-		final IceCandidate candidate1 = candidate;
+	public void onRemoteIceCandidate(final IceCandidate candidate) {
 		this.container.$context().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				if (peerConnectionClient == null) {
-					System.out.println("Received ICE candidate for a non-initialized peer connection.");
+					logAndToast("Received ICE candidate for a non-initialized peer connection.");
 					return;
 				}
-				peerConnectionClient.addRemoteIceCandidate(candidate1);
+				peerConnectionClient.addRemoteIceCandidate(candidate);
 			}
 		});
 	}
 
 	@Override
-	public void onRemoteIceCandidatesRemoved(IceCandidate[] candidates) {
-
-		final IceCandidate[] candidates1 = candidates;
-
+	public void onRemoteIceCandidatesRemoved(final IceCandidate[] candidates) {
 		this.container.$context().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
 				if (peerConnectionClient == null) {
-					System.out.println("Received ICE candidate removals for a non-initialized peer connection.");
+					logAndToast("Received ICE candidate removals for a non-initialized peer connection.");
 					return;
 				}
-				peerConnectionClient.removeRemoteIceCandidates(candidates1);
+				peerConnectionClient.removeRemoteIceCandidates(candidates);
 			}
 		});
 	}
@@ -827,27 +862,8 @@ public class StreamLink extends AndroidNonvisibleComponent
 	}
 
 	@Override
-	public void onChannelError(String description) {
-		// DO NOTHING
-	}
-
-	private static class ProxyRenderer implements VideoRenderer.Callbacks {
-		private VideoRenderer.Callbacks target;
-
-		@Override
-		synchronized public void renderFrame(VideoRenderer.I420Frame frame) {
-			if (target == null) {
-				System.out.println("Dropping frame in proxy because target is null.");
-				VideoRenderer.renderFrameDone(frame);
-				return;
-			}
-
-			target.renderFrame(frame);
-		}
-
-		synchronized public void setTarget(VideoRenderer.Callbacks target) {
-			this.target = target;
-		}
+	public void onChannelError(final String description) {
+		reportError(description);
 	}
 
 	private static class ProxyVideoSink implements VideoSink {
@@ -859,7 +875,6 @@ public class StreamLink extends AndroidNonvisibleComponent
 				System.out.println("Dropping frame in proxy because target is null.");
 				return;
 			}
-
 			target.onFrame(frame);
 		}
 
@@ -913,6 +928,18 @@ public class StreamLink extends AndroidNonvisibleComponent
 				disconnect();
 			}
 		}
+	}
+
+	@Override
+	public void onConnected() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onDisconnected() {
+		// TODO Auto-generated method stub
+
 	}
 
 }

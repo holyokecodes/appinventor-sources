@@ -1,25 +1,10 @@
-/*
- *  Copyright 2013 The WebRTC Project Authors. All rights reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree. An additional intellectual property rights grant can be found
- *  in the file PATENTS.  All contributing project authors may
- *  be found in the AUTHORS file in the root of the source tree.
- */
-
-package haus.orange.StreamLink.webrtc;
-
+package haus.orange.webrtc;
 
 import org.webrtc.IceCandidate;
 import org.webrtc.PeerConnection;
 import org.webrtc.SessionDescription;
-
 import java.util.List;
 
-/**
- * AppRTCClient is the interface representing an AppRTC client.
- */
 public interface AppRTCClient {
 	/**
 	 * Struct holding the connection parameters of an AppRTC room.
@@ -47,7 +32,7 @@ public interface AppRTCClient {
 	 * parameters. Once connection is established onConnectedToRoom() callback with
 	 * room parameters is invoked.
 	 */
-	void connectToRoom(RoomConnectionParameters connectionParameters, String apprtcInstanceURL);
+	void connectToRoom(RoomConnectionParameters connectionParameters);
 
 	/**
 	 * Send offer SDP to the other participant.

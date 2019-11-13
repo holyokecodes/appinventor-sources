@@ -1,15 +1,4 @@
-/*
- *  Copyright 2015 The WebRTC Project Authors. All rights reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree. An additional intellectual property rights grant can be found
- *  in the file PATENTS.  All contributing project authors may
- *  be found in the AUTHORS file in the root of the source tree.
- */
-
-
-package haus.orange.StreamLink.webrtc.util;
+package haus.orange.webrtc.util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,9 +8,6 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.Scanner;
 
-/**
- * Asynchronous http requests implementation.
- */
 public class AsyncHttpURLConnection {
 	private static final int HTTP_TIMEOUT_MS = 8000;
 	private static final String HTTP_ORIGIN = "https://appr.tc";
@@ -52,10 +38,10 @@ public class AsyncHttpURLConnection {
 	}
 
 	public void send() {
-		new Thread(this.sendHttpMessage()).start();
+		new Thread(this::sendHttpMessage).start();
 	}
 
-	private Runnable sendHttpMessage() {
+	private void sendHttpMessage() {
 		try {
 			HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
 			byte[] postData = new byte[0];
@@ -81,21 +67,19 @@ public class AsyncHttpURLConnection {
 			} else {
 				connection.setRequestProperty("Content-Type", contentType);
 			}
-
 			// Send POST request.
 			if (doOutput && postData.length > 0) {
 				OutputStream outStream = connection.getOutputStream();
 				outStream.write(postData);
 				outStream.close();
 			}
-
 			// Get response.
 			int responseCode = connection.getResponseCode();
 			if (responseCode != 200) {
 				events.onHttpError(
 						"Non-200 response to " + method + " to URL: " + url + " : " + connection.getHeaderField(null));
 				connection.disconnect();
-				return null;
+				return;
 			}
 			InputStream responseStream = connection.getInputStream();
 			String response = drainStream(responseStream);
@@ -107,7 +91,6 @@ public class AsyncHttpURLConnection {
 		} catch (IOException e) {
 			events.onHttpError("HTTP " + method + " to " + url + " error: " + e.getMessage());
 		}
-		return null;
 	}
 
 	// Return the contents of an InputStream as a String.

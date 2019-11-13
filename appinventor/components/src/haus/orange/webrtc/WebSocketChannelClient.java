@@ -1,30 +1,19 @@
-/*
- *  Copyright 2014 The WebRTC Project Authors. All rights reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree. An additional intellectual property rights grant can be found
- *  in the file PATENTS.  All contributing project authors may
- *  be found in the AUTHORS file in the root of the source tree.
- */
-
-package haus.orange.StreamLink.webrtc;
+package haus.orange.webrtc;
 
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import de.tavendo.autobahn.WebSocket.WebSocketConnectionObserver;
 import de.tavendo.autobahn.WebSocketConnection;
 import de.tavendo.autobahn.WebSocketException;
-import haus.orange.StreamLink.webrtc.util.AsyncHttpURLConnection;
-import haus.orange.StreamLink.webrtc.util.AsyncHttpURLConnection.AsyncHttpEvents;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import haus.orange.webrtc.util.AsyncHttpURLConnection;
+import haus.orange.webrtc.util.AsyncHttpURLConnection.AsyncHttpEvents;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 
 public class WebSocketChannelClient {
 	private static final String TAG = "WSChannelRTCClient";
@@ -34,9 +23,10 @@ public class WebSocketChannelClient {
 	private WebSocketConnection ws;
 	private String wsServerUrl;
 	private String postServerUrl;
+	@Nullable
 	private String roomID;
+	@Nullable
 	private String clientID;
-	private String deviceID;
 	private WebSocketConnectionState state;
 	// Do not remove this member variable. If this is removed, the observer gets
 	// garbage collected and
@@ -67,10 +57,9 @@ public class WebSocketChannelClient {
 		void onWebSocketError(final String description);
 	}
 
-	public WebSocketChannelClient(String deviceID, Handler handler, WebSocketChannelEvents events) {
+	public WebSocketChannelClient(Handler handler, WebSocketChannelEvents events) {
 		this.handler = handler;
 		this.events = events;
-		this.deviceID = deviceID;
 		roomID = null;
 		clientID = null;
 		state = WebSocketConnectionState.NEW;
@@ -89,7 +78,6 @@ public class WebSocketChannelClient {
 		wsServerUrl = wsUrl;
 		postServerUrl = postUrl;
 		closeEvent = false;
-
 		Log.d(TAG, "Connecting WebSocket to: " + wsUrl + ". Post URL: " + postUrl);
 		ws = new WebSocketConnection();
 		wsObserver = new WebSocketObserver();
@@ -115,7 +103,7 @@ public class WebSocketChannelClient {
 		try {
 			json.put("cmd", "register");
 			json.put("roomid", roomID);
-			json.put("clientid", deviceID);
+			json.put("clientid", clientID);
 			Log.d(TAG, "C->WSS: " + json.toString());
 			ws.sendTextMessage(json.toString());
 			state = WebSocketConnectionState.REGISTERED;
@@ -179,7 +167,6 @@ public class WebSocketChannelClient {
 		if (state == WebSocketConnectionState.CONNECTED || state == WebSocketConnectionState.ERROR) {
 			ws.disconnect();
 			state = WebSocketConnectionState.CLOSED;
-
 			// Wait for websocket close event to prevent websocket library from
 			// sending any pending messages to deleted looper thread.
 			if (waitForComplete) {

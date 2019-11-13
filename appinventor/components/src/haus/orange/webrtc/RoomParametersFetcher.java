@@ -1,19 +1,6 @@
-/*
- *  Copyright 2014 The WebRTC Project Authors. All rights reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree. An additional intellectual property rights grant can be found
- *  in the file PATENTS.  All contributing project authors may
- *  be found in the AUTHORS file in the root of the source tree.
- */
-package haus.orange.StreamLink.webrtc;
+package haus.orange.webrtc;
 
 import android.util.Log;
-import haus.orange.StreamLink.webrtc.AppRTCClient.SignalingParameters;
-import haus.orange.StreamLink.webrtc.util.AsyncHttpURLConnection;
-import haus.orange.StreamLink.webrtc.util.AsyncHttpURLConnection.AsyncHttpEvents;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -21,7 +8,9 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.List;
-
+import haus.orange.webrtc.AppRTCClient.SignalingParameters;
+import haus.orange.webrtc.util.AsyncHttpURLConnection;
+import haus.orange.webrtc.util.AsyncHttpURLConnection.AsyncHttpEvents;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,10 +18,6 @@ import org.webrtc.IceCandidate;
 import org.webrtc.PeerConnection;
 import org.webrtc.SessionDescription;
 
-/**
- * AsyncTask that converts an AppRTC room URL into the set of signaling
- * parameters to use with that room.
- */
 public class RoomParametersFetcher {
 	private static final String TAG = "RoomRTCClient";
 	private static final int TURN_HTTP_TIMEOUT_MS = 5000;
@@ -62,7 +47,7 @@ public class RoomParametersFetcher {
 		this.events = events;
 	}
 
-	public void makeRequest(final String apprtcInstanceURL) {
+	public void makeRequest() {
 		Log.d(TAG, "Connecting to room: " + roomUrl);
 		AsyncHttpURLConnection httpConnection = new AsyncHttpURLConnection("POST", roomUrl, roomMessage,
 				new AsyncHttpEvents() {
@@ -74,21 +59,18 @@ public class RoomParametersFetcher {
 
 					@Override
 					public void onHttpComplete(String response) {
-						roomHttpResponseParse(response, apprtcInstanceURL);
+						roomHttpResponseParse(response);
 					}
 				});
 		httpConnection.send();
 	}
 
-	private void roomHttpResponseParse(String response, String apprtcInstanceURL) {
+	private void roomHttpResponseParse(String response) {
 		Log.d(TAG, "Room response: " + response);
 		try {
 			List<IceCandidate> iceCandidates = null;
 			SessionDescription offerSdp = null;
 			JSONObject roomJson = new JSONObject(response);
-			
-			Log.d("ROOM JSON: ", response);
-
 			String result = roomJson.getString("result");
 			if (!result.equals("SUCCESS")) {
 				events.onSignalingParametersError("Room response error: " + result);
@@ -126,44 +108,43 @@ public class RoomParametersFetcher {
 			Log.d(TAG, "Initiator: " + initiator);
 			Log.d(TAG, "WSS url: " + wssUrl);
 			Log.d(TAG, "WSS POST url: " + wssPostUrl);
-
 			List<PeerConnection.IceServer> iceServers = iceServersFromPCConfigJSON(roomJson.getString("pc_config"));
 			boolean isTurnPresent = false;
 			for (PeerConnection.IceServer server : iceServers) {
 				Log.d(TAG, "IceServer: " + server);
-				if (server.uri.startsWith("turn:")) {
-					isTurnPresent = true;
-					break;
+				for (String uri : server.urls) {
+					if (uri.startsWith("turn:")) {
+						isTurnPresent = true;
+						break;
+					}
 				}
 			}
 			// Request TURN servers.
 			if (!isTurnPresent && !roomJson.optString("ice_server_url").isEmpty()) {
-				List<PeerConnection.IceServer> turnServers = requestTurnServers(roomJson.getString("ice_server_url"), apprtcInstanceURL);
+				List<PeerConnection.IceServer> turnServers = requestTurnServers(roomJson.getString("ice_server_url"));
 				for (PeerConnection.IceServer turnServer : turnServers) {
 					Log.d(TAG, "TurnServer: " + turnServer);
 					iceServers.add(turnServer);
 				}
 			}
-
 			SignalingParameters params = new SignalingParameters(iceServers, initiator, clientId, wssUrl, wssPostUrl,
 					offerSdp, iceCandidates);
 			events.onSignalingParametersReady(params);
 		} catch (JSONException e) {
 			events.onSignalingParametersError("Room JSON parsing error: " + e.toString());
-		}
-      catch (IOException e) {
+		} catch (IOException e) {
 			events.onSignalingParametersError("Room IO error: " + e.toString());
 		}
 	}
 
 	// Requests & returns a TURN ICE Server based on a request URL. Must be run
 	// off the main thread!
-	private List<PeerConnection.IceServer> requestTurnServers(String url, String apprtcInstanceURL) throws IOException, JSONException {
+	private List<PeerConnection.IceServer> requestTurnServers(String url) throws IOException, JSONException {
 		List<PeerConnection.IceServer> turnServers = new ArrayList<>();
 		Log.d(TAG, "Request TURN from: " + url);
 		HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
 		connection.setDoOutput(true);
-		connection.setRequestProperty("REFERER", apprtcInstanceURL);
+		connection.setRequestProperty("REFERER", "https://appr.tc");
 		connection.setConnectTimeout(TURN_HTTP_TIMEOUT_MS);
 		connection.setReadTimeout(TURN_HTTP_TIMEOUT_MS);
 		int responseCode = connection.getResponseCode();
@@ -189,8 +170,6 @@ public class RoomParametersFetcher {
 				turnServers.add(turnServer);
 			}
 		}
-		
-		
 		return turnServers;
 	}
 
@@ -203,7 +182,6 @@ public class RoomParametersFetcher {
 		for (int i = 0; i < servers.length(); ++i) {
 			JSONObject server = servers.getJSONObject(i);
 			String url = server.getString("urls");
-			Log.w("FOUND SERVER: ", url);
 			String credential = server.has("credential") ? server.getString("credential") : "";
 			PeerConnection.IceServer turnServer = PeerConnection.IceServer.builder(url).setPassword(credential)
 					.createIceServer();

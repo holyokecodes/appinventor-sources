@@ -1,41 +1,20 @@
-package haus.orange.StreamLink.webrtc;
-
-/*
- *  Copyright 2014 The WebRTC Project Authors. All rights reserved.
- *
- *  Use of this source code is governed by a BSD-style license
- *  that can be found in the LICENSE file in the root of the source
- *  tree. An additional intellectual property rights grant can be found
- *  in the file PATENTS.  All contributing project authors may
- *  be found in the AUTHORS file in the root of the source tree.
- */
+package haus.orange.webrtc;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.support.annotation.Nullable;
 import android.util.Log;
-import haus.orange.StreamLink.webrtc.RoomParametersFetcher.RoomParametersFetcherEvents;
-import haus.orange.StreamLink.webrtc.WebSocketChannelClient.WebSocketChannelEvents;
-import haus.orange.StreamLink.webrtc.WebSocketChannelClient.WebSocketConnectionState;
-import haus.orange.StreamLink.webrtc.util.AsyncHttpURLConnection;
-import haus.orange.StreamLink.webrtc.util.AsyncHttpURLConnection.AsyncHttpEvents;
-
+import haus.orange.webrtc.RoomParametersFetcher.RoomParametersFetcherEvents;
+import haus.orange.webrtc.WebSocketChannelClient.WebSocketChannelEvents;
+import haus.orange.webrtc.WebSocketChannelClient.WebSocketConnectionState;
+import haus.orange.webrtc.util.AsyncHttpURLConnection;
+import haus.orange.webrtc.util.AsyncHttpURLConnection.AsyncHttpEvents;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.webrtc.IceCandidate;
 import org.webrtc.SessionDescription;
 
-/**
- * Negotiates signaling for chatting with https://appr.tc "rooms". Uses the
- * client<->server specifics of the apprtc AppEngine webapp.
- *
- * <p>
- * To use: create an instance of this object (registering a message handler) and
- * call connectToRoom(). Once room connection is established onConnectedToRoom()
- * callback with room parameters is invoked. Messages to other party (with local
- * Ice candidates and answer SDP) can be sent after WebSocket connection is
- * established.
- */
 public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents {
 	private static final String TAG = "WSRTCClient";
 	private static final String ROOM_JOIN = "join";
@@ -58,11 +37,9 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
 	private RoomConnectionParameters connectionParameters;
 	private String messageUrl;
 	private String leaveUrl;
-	private String deviceID;
 
-	public WebSocketRTCClient(String deviceID, SignalingEvents events) {
+	public WebSocketRTCClient(SignalingEvents events) {
 		this.events = events;
-		this.deviceID = deviceID;
 		roomState = ConnectionState.NEW;
 		final HandlerThread handlerThread = new HandlerThread(TAG);
 		handlerThread.start();
@@ -74,12 +51,12 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
 	// Asynchronously connect to an AppRTC room URL using supplied connection
 	// parameters, retrieves room parameters and connect to WebSocket server.
 	@Override
-	public void connectToRoom(RoomConnectionParameters connectionParameters, final String apprtcInstanceURL) {
+	public void connectToRoom(RoomConnectionParameters connectionParameters) {
 		this.connectionParameters = connectionParameters;
 		handler.post(new Runnable() {
 			@Override
 			public void run() {
-				connectToRoomInternal(apprtcInstanceURL);
+				connectToRoomInternal();
 			}
 		});
 	}
@@ -96,12 +73,11 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
 	}
 
 	// Connects to room - function runs on a local looper thread.
-	private void connectToRoomInternal(String apprtcInstanceURL) {
+	private void connectToRoomInternal() {
 		String connectionUrl = getConnectionUrl(connectionParameters);
 		Log.d(TAG, "Connect to room: " + connectionUrl);
 		roomState = ConnectionState.NEW;
-		wsClient = new WebSocketChannelClient(deviceID, handler, this);
-
+		wsClient = new WebSocketChannelClient(handler, this);
 		RoomParametersFetcherEvents callbacks = new RoomParametersFetcherEvents() {
 			@Override
 			public void onSignalingParametersReady(final SignalingParameters params) {
@@ -118,8 +94,7 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
 				WebSocketRTCClient.this.reportError(description);
 			}
 		};
-
-		new RoomParametersFetcher(connectionUrl, "this is the room message", callbacks).makeRequest(apprtcInstanceURL);
+		new RoomParametersFetcher(connectionUrl, null, callbacks).makeRequest();
 	}
 
 	// Disconnect from room and send bye messages - runs on a local looper thread.
@@ -177,10 +152,8 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
 		Log.d(TAG, "Message URL: " + messageUrl);
 		Log.d(TAG, "Leave URL: " + leaveUrl);
 		roomState = ConnectionState.CONNECTED;
-
 		// Fire connection and signaling parameters events.
 		events.onConnectedToRoom(signalingParameters);
-
 		// Connect and register WebSocket client.
 		wsClient.connect(signalingParameters.wssUrl, signalingParameters.wssPostUrl);
 		wsClient.register(connectionParameters.roomId, signalingParameters.clientId);
@@ -382,7 +355,7 @@ public class WebSocketRTCClient implements AppRTCClient, WebSocketChannelEvents 
 	}
 
 	// Send SDP or ICE candidate to a room server.
-	private void sendPostMessage(final MessageType messageType, final String url, final String message) {
+	private void sendPostMessage(final MessageType messageType, final String url, @Nullable final String message) {
 		String logInfo = url;
 		if (message != null) {
 			logInfo += ". Message: " + message;
