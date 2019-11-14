@@ -151,7 +151,12 @@ public class AppRTCAudioManager {
 				// This method will be called each time a state change is detected.
 				// Example: user holds his hand over the device (closer than ~5 cm),
 				// or removes his hand from the device.
-				this::onProximitySensorChangedState);
+				new Runnable() {
+					@Override
+					public void run() {
+						onProximitySensorChangedState();
+					}
+				});
 		Log.d(TAG, "defaultAudioDevice: " + defaultAudioDevice);
 		AppRTCUtils.logDeviceInfo(TAG);
 	}

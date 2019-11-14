@@ -7,7 +7,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
-import org.webrtc.Camera1Enumerator;
 import org.webrtc.Camera2Enumerator;
 import org.webrtc.CameraEnumerator;
 import org.webrtc.EglBase;
@@ -60,7 +59,6 @@ import haus.orange.webrtc.AppRTCAudioManager.AudioManagerEvents;
 import haus.orange.webrtc.AppRTCClient;
 import haus.orange.webrtc.AppRTCClient.RoomConnectionParameters;
 import haus.orange.webrtc.AppRTCClient.SignalingParameters;
-import haus.orange.webrtc.DirectRTCClient;
 import haus.orange.webrtc.PeerConnectionClient;
 import haus.orange.webrtc.PeerConnectionClient.PeerConnectionEvents;
 import haus.orange.webrtc.PeerConnectionClient.PeerConnectionParameters;
@@ -224,7 +222,7 @@ public class StreamLink extends AndroidNonvisibleComponent
 	}
 
 	private void initWebRTC(String roomID, Canvas canvas) {
-
+		
 		final EglBase eglBase = EglBase.create();
 
 		connected = false;
@@ -272,13 +270,7 @@ public class StreamLink extends AndroidNonvisibleComponent
 				false, false, null);
 		commandLineRun = false;
 		int runTimeMs = 0;
-
-		if (false || !DirectRTCClient.IP_PATTERN.matcher(roomID).matches()) {
-			appRtcClient = new WebSocketRTCClient(this);
-		} else {
-			logAndToast("Using DirectRTCClient because room name looks like an IP.");
-			appRtcClient = new DirectRTCClient(this);
-		}
+		appRtcClient = new WebSocketRTCClient(this);
 		roomConnectionParameters = new AppRTCClient.RoomConnectionParameters(roomUri.toString(), roomID, false, null);
 
 		peerConnectionClient = new PeerConnectionClient(this.container.$context(), eglBase, peerConnectionParameters,
@@ -688,43 +680,43 @@ public class StreamLink extends AndroidNonvisibleComponent
 	}
 
 	@Override
-	  public void onIceDisconnected() {
-	    this.container.$context().runOnUiThread(new Runnable() {
-	      @Override
-	      public void run() {
-	        logAndToast("ICE disconnected");
-	      }
-	    });
-	  }
+	public void onIceDisconnected() {
+		this.container.$context().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				logAndToast("ICE disconnected");
+			}
+		});
+	}
 
 	@Override
 	public void onPeerConnectionClosed() {
-		// DO NOTHING
 	}
 
 	@Override
-	public void onPeerConnectionStatsReady(StatsReport[] reports) {
-		// DO NOTHING
+	public void onPeerConnectionStatsReady(final StatsReport[] reports) {
+		this.container.$context().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				if (!isError && connected) {
+					// New Stats
+				}
+			}
+		});
 	}
 
 	@Override
-	public void onPeerConnectionError(String description) {
-		// DO NOTHING
+	public void onPeerConnectionError(final String description) {
+		reportError(description);
 	}
 
-	private boolean useCamera2() {
-		return Camera2Enumerator.isSupported(this.container.$context());
-	}
+//	private boolean useCamera2() {
+//		return Camera2Enumerator.isSupported(this.container.$context());
+//	}
 
 	private @Nullable VideoCapturer createVideoCapturer() {
 		final VideoCapturer videoCapturer;
-		if (useCamera2()) {
-			logAndToast("Creating capturer using camera2 API.");
-			videoCapturer = createCameraCapturer(new Camera2Enumerator(this.container.$context()));
-		} else {
-			logAndToast("Creating capturer using camera1 API.");
-			videoCapturer = createCameraCapturer(new Camera1Enumerator(false));
-		}
+		videoCapturer = createCameraCapturer(new Camera2Enumerator(this.container.$context()));
 		if (videoCapturer == null) {
 			reportError("Failed to open camera");
 			return null;
@@ -932,14 +924,27 @@ public class StreamLink extends AndroidNonvisibleComponent
 
 	@Override
 	public void onConnected() {
-		// TODO Auto-generated method stub
-
+		final long delta = System.currentTimeMillis() - callStartedTimeMs;
+		this.container.$context().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				logAndToast("DTLS connected, delay=" + delta + "ms");
+				connected = true;
+				callConnected();
+			}
+		});
 	}
 
 	@Override
 	public void onDisconnected() {
-		// TODO Auto-generated method stub
-
+		this.container.$context().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
+				logAndToast("DTLS disconnected");
+				connected = false;
+				disconnect();
+			}
+		});
 	}
 
 }

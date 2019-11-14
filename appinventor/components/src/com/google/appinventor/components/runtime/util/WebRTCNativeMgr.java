@@ -271,17 +271,18 @@ public class WebRTCNativeMgr {
 
     this.form = form;
     rCode = code;
-    /* Initialize WebRTC globally */
-    PeerConnectionFactory.initializeAndroidGlobals(context, false);
     /* Setup factory options */
     PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
     /* Create the factory */
-    PeerConnectionFactory factory = new PeerConnectionFactory(options);
+    PeerConnectionFactory factory = PeerConnectionFactory.builder().setOptions(options).createPeerConnectionFactory();
+    
     /* Create the peer connection using the iceServers we received in the constructor */
     RTCConfiguration rtcConfig = new RTCConfiguration(iceServers);
     rtcConfig.continualGatheringPolicy = ContinualGatheringPolicy.GATHER_CONTINUALLY;
-    peerConnection = factory.createPeerConnection(rtcConfig, new MediaConstraints(),
-      observer);
+    
+    
+    peerConnection = factory.createPeerConnection(rtcConfig, observer);
+    
     timer.schedule(new TimerTask() {
         @Override
         public void run() {

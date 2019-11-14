@@ -111,18 +111,21 @@ public class RecordedAudioToFileController implements SamplesReadyCallback {
 			}
 		}
 		// Append the recorded 16-bit audio samples to the open output file.
-		executor.execute(() -> {
-			if (rawAudioFileOutputStream != null) {
-				try {
-					// Set a limit on max file size. 58348800 bytes corresponds to
-					// approximately 10 minutes of recording in mono at 48kHz.
-					if (fileSizeInBytes < MAX_FILE_SIZE_IN_BYTES) {
-						// Writes samples.getData().length bytes to output stream.
-						rawAudioFileOutputStream.write(samples.getData());
-						fileSizeInBytes += samples.getData().length;
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				if (rawAudioFileOutputStream != null) {
+					try {
+						// Set a limit on max file size. 58348800 bytes corresponds to
+						// approximately 10 minutes of recording in mono at 48kHz.
+						if (fileSizeInBytes < MAX_FILE_SIZE_IN_BYTES) {
+							// Writes samples.getData().length bytes to output stream.
+							rawAudioFileOutputStream.write(samples.getData());
+							fileSizeInBytes += samples.getData().length;
+						}
+					} catch (IOException e) {
+						Log.e(TAG, "Failed to write audio to file: " + e.getMessage());
 					}
-				} catch (IOException e) {
-					Log.e(TAG, "Failed to write audio to file: " + e.getMessage());
 				}
 			}
 		});

@@ -286,8 +286,8 @@
       <javac destdir="@{apt-classdir}"
              encoding="utf-8"
              sourcepath=""
-             source="7"
-             target="7"
+             source="8"
+             target="8"
              srcdir="${src.dir}"
              includeantruntime="false">
         <include name="**/*.java" /> <!-- include all java files -->
@@ -318,7 +318,7 @@
     <mkdir dir="${ComponentProcessingLib-class.dir}" />
 
     <ai.javac destdir="${ComponentProcessingLib-class.dir}"
-              source="1.7" target="1.7">
+              source="1.8" target="1.8">
       <include name="${components.pkg}/scripts/ComponentProcessor.java" />
       <include name="${components.pkg}/annotations/*.java" />
       <include name="${components.pkg}/annotations/androidmanifest/*.java" />
@@ -347,7 +347,7 @@
     <mkdir dir="${AnnotationProcessors-class.dir}" />
 
     <ai.javac destdir="${AnnotationProcessors-class.dir}"
-              source="1.7" target="1.7">
+              source="1.8" target="1.8">
       <include name="${components.pkg}/scripts/*.java" />
       <exclude name="${components.pkg}/scripts/ExternalComponentGenerator.java" />
       <classpath>
