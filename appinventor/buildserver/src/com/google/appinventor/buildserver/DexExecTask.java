@@ -184,8 +184,8 @@ public class DexExecTask  {
         commandLineList.add("-jar");
         commandLineList.add(mExecutable);
 
-        commandLineList.add("--dex");
-        commandLineList.add("--positions=lines");
+        //commandLineList.add("--dex");
+        //commandLineList.add("--positions=lines");
 
         if (mNoLocals) {
             commandLineList.add("--no-locals");
@@ -194,15 +194,18 @@ public class DexExecTask  {
         if (mVerbose) {
             commandLineList.add("--verbose");
         }
+        commandLineList.add("--release");
 
-        commandLineList.add("--output=" + output);
-
+        //commandLineList.add("--output " + output);
+        
         for (File input : inputs) {
             String absPath = input.getAbsolutePath();
-            if (showInputs) {
-                System.out.println("Input: " + absPath);
+            if (absPath.endsWith(".jar")) {
+            	if (showInputs) {
+                    System.out.println("Input: " + absPath);
+                }
+                commandLineList.add(absPath);	
             }
-            commandLineList.add(absPath);
         }
 
         // Convert command line to an array

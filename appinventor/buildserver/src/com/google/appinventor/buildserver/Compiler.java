@@ -119,7 +119,7 @@ public final class Compiler {
   private static final String COMP_BUILD_INFO =
       RUNTIME_FILES_DIR + "simple_components_build_info.json";
   private static final String DX_JAR =
-      RUNTIME_FILES_DIR + "dx.jar";
+      RUNTIME_FILES_DIR + "d8.jar";
   private static final String KAWA_RUNTIME =
       RUNTIME_FILES_DIR + "kawa.jar";
   private static final String SIMPLE_ANDROID_RUNTIME_JAR =

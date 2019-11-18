@@ -168,6 +168,7 @@
     <!-- END Android Support Libraries -->
     <copy toFile="${public.deps.dir}/android.jar" file="${lib.dir}/android/android-28/android.jar" />
     <copy toFile="${public.deps.dir}/dx.jar" file="${lib.dir}/android/tools/dx.jar" />
+  	<copy toFile="${public.deps.dir}/d8.jar" file="${lib.dir}/android/tools/d8.jar" />
     <copy toFile="${public.deps.dir}/apksigner.jar" file="${lib.dir}/android/tools/apksigner.jar" />
     <copy toFile="${public.deps.dir}/CommonVersion.jar" file="${build.dir}/common/CommonVersion.jar" />
 
@@ -575,15 +576,24 @@
 
   <target name="dexExtension" depends="">
     <basename property="extensionType" file="${extension}" suffix=".jar"/>
-    <java jar="${lib.dir}/android/tools/dx.jar"
+    <java jar="${lib.dir}/android/tools/d8.jar"
           fork="true"
           failonerror="true">
-      <arg value="--dex"/>
-      <arg value="--no-strict"/>
       <arg value="--output"/>
       <arg value="${ExternalComponent.dir}/${extensionType}/classes.jar"/>
       <arg value="${ExternalComponent-class.dir}/${extensionType}.jar"/>
     </java>
+  	<!--
+  	<java jar="${lib.dir}/android/tools/dx.jar"
+          fork="true"
+          failonerror="true">
+      <arg value="dex"/>
+      <arg value="no-strict"/>
+      <arg value="output"/>
+      <arg value="${ExternalComponent.dir}/${extensionType}/classes.jar"/>
+      <arg value="${ExternalComponent-class.dir}/${extensionType}.jar"/>
+    </java>
+    -->
     <echo>Dexing extension: ${extensionType}</echo>
   </target>
 
